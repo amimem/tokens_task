@@ -10,7 +10,8 @@ class TokensEnv(gym.Env):
 	def __init__(self, seed=7):
 
 		np.random.seed(seed)
-		
+
+		self.num_actions = 3
 		# forward or backward in each dimension
 		self.action_space = spaces.Discrete(3)
 		self.observation_space = spaces.Box(low=np.array([-15, -15]), high=np.array([15, 15]), dtype=np.int64)
@@ -45,6 +46,8 @@ class TokensEnv(gym.Env):
 			Nt = Nt_prev + 1
 
 		ht = ht_prev + self.time_steps * action
+		# print(type(action))
+		# print(type(Nt))
 
 		next_state = np.zeros(2,dtype=np.int64)
 		next_state[0] = Nt
@@ -55,7 +58,7 @@ class TokensEnv(gym.Env):
 
 		else:
 			reward = self._sign(Nt) * self._sign(ht)
-			self.reset()
+			next_state = self.reset()
 			is_done = True
 
 		self.state = next_state
@@ -74,6 +77,15 @@ class TokensEnv(gym.Env):
 
 		else:
 			return 0
+
+	def get_num_states(self):
+		return len(range(-15,16))*len(range(-15,16)) #-15 to 15 inclusive for Nt and -15 to 15 inclusive for ht
+
+	def get_num_actions(self):
+		return self.num_actions
+
+
+
 
 
 	def reset(self):

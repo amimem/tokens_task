@@ -1,0 +1,4 @@
+main.py
+
+Namespace(algo='q-learning', env='tokens-v0', games=500, log_interval=1, model=None, seed=7)
+

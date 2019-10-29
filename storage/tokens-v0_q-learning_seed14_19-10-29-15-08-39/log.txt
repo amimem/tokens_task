@@ -1,0 +1,4 @@
+main.py --seed 14
+
+Namespace(algo='q-learning', convg=0.001, env='tokens-v0', games=500, log_interval=1, model=None, seed=14)
+
