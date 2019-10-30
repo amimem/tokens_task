@@ -12,8 +12,9 @@ import lib
 import numpy as np
 
 
-numNT = 31
-numHT = 31
+numNT = 7
+numHT = 7
+num_actions = 3
 
 def main():
 
@@ -25,10 +26,14 @@ def main():
 	parser.add_argument("--seed", type=int, default=7, help="random seed (default: 7)")
 	parser.add_argument("--log_interval", type=int, default=1, help="number of updates between two logs (default: 1)")
 	parser.add_argument("--algo", default='q-learning', help="algorithm to use: SARSA | Q-learning")
-	parser.add_argument("--convg", type=float, default=0.01, help="convergence value")
-	parser.add_argument("--frames", type=int, default=15*1000, help="number of frames of training (default: 3000)")
-	parser.add_argument("--lr", type=float, default=0.01, help="learning rate")
-	parser.add_argument("--save-interval", type=int, default=30, help="number of updates between two saves (default: 30, 0 means no saving)")
+	parser.add_argument("--convg", type=float, default=0.00001, help="convergence value")
+	parser.add_argument("--frames", type=int, default=3*10000, help="number of frames of training (default: 300K)")
+	parser.add_argument("--lr", type=float, default=0.1, help="learning rate")
+	parser.add_argument("--save-interval", type=int, default=1, help="number of updates between two saves (default: 30, 0 means no saving)")
+	parser.add_argument("--eps_start", type=float, default=1.0, help="initial epsilon-greedy value")
+	parser.add_argument("--eps_final", type=float, default=0.001, help="final epsilon-greedy value")
+	parser.add_argument("--eps_frames", type=int, default=3*500, help="number of frames for eps greedy to go from init value to final value (default: 75k)")
+	parser.add_argument("--gamma", type=float, default=1.0, help="discount factor")
 
 
 	args = parser.parse_args()
@@ -68,10 +73,13 @@ def main():
 	num_states = env.get_num_states()
 	num_actions = env.get_num_actions()
 
-	model = lib.Q_Table(env.get_num_states(), env.get_num_actions(), (numNT, numHT), args.convg)
+	# model = lib.Q_Table(env.get_num_states(), env.get_num_actions(), (numNT, numHT), args.convg)
+	model = lib.Q_Table(numNT*numHT, num_actions, (numNT, numHT), args.convg)
+
 	policy = lib.EpsilonGreedyPolicy()
-	eps_track = lib.EpsilonTracker(1.0, 0.01, 15*200, policy)
+	eps_track = lib.EpsilonTracker(args.eps_start,args.eps_final, args.eps_frames, policy)
 	monkeyAgent = lib.SarsaAgent(policy, model)
+	lr_sched = lib.LRscheduler(0.1, 0.00001, 100000)
 
 	num_frames = status["num_frames"]
 	update = status["update"]
@@ -82,70 +90,97 @@ def main():
 	totalLoss = []
 
 	state = env.reset()
+	decisionTime = []
+	lossPerEpisode = []
+
+	# no_choice = True
 
 
-	while num_frames < args.frames: 
+	while num_frames <= args.frames: 
 
 		# print('state: ', [state])
 
 		eps_track.set_eps(num_frames)
-		action = monkeyAgent.get_actions([state])
-		next_state, reward, is_done, _ = env.step(action)
-		next_act = monkeyAgent.get_actions([next_state])
+		action = monkeyAgent.get_actions(state)
 
-		loss = model.get_TDerror([state], action, [next_state], next_act, reward)
-		model.update_qVal(args.lr, [state], action, loss)
+		# if action != 0:
+		# 	decisionTime.append(num_frames%15)
+		# 	no_choice = False
+
+		next_state, reward, is_done, time_steps = env.step(action)
+		# print('frame: ', num_frames)
+		# print('state: ', state)
+		# print('next_state: ', next_state)
+		# print('chosen action: ', action)
+		# print('reward:', reward)
+		# print('is_done: ', is_done)
+		# print('state id: ', model.get_stateID(state))
+		# print('next state id: ', model.get_stateID(next_state))
+
+
+		next_act = monkeyAgent.get_actions(next_state)
+		# print(state)
+		
+		loss = model.get_TDerror(state, action, next_state, next_act, reward, args.gamma, is_done)
+
+		# print('loss: ', loss)
+		lr = lr_sched.get_lr(num_frames)
+		converged = model.update_qVal(lr, state, action, loss)
 		totalLoss.append(loss)
-
 		state = next_state
-
-		num_frames+=1 
-		update+= 1
 
 		if is_done:
 			num_games+=1
 			totalReturns.append(reward)
+			no_choice = True
+			lossPerEpisode.append(np.sum(totalLoss))
+			totalLoss = []
+
+		else:
+			num_frames+=1 
+			update+= 1
+
+		
+		
 
 			# print('Episode over!')
 			# print('state: ', [state])
+
+		# print(decisionTime)
 
 
 		if num_games > 0 and num_games % args.log_interval == 0:
 
 			duration = int(time.time() - start_time)
-			totalLoss_val = np.sum(totalLoss)
+			totalLoss_val = np.sum(lossPerEpisode)
 			totalReturn_val = np.sum(totalReturns)
 
-			avg_loss = totalLoss_val/num_frames
-			avg_returns = totalReturn_val / num_games
+			avg_loss = np.mean(lossPerEpisode[-100:])
+			avg_returns = np.mean(totalReturns[-100:])
 
 			header = ["update", "frames", "Games", "duration"]
 			data = [update, num_frames, num_games, duration]
 
-			header += ["eps"]
-			data += [policy.epsilon]
+			header += ["eps", "lr"]
+			data += [policy.epsilon, lr]
 
 			header += ["Loss", "Returns", "Avg Loss", "Avg Returns"]
 			data += [totalLoss_val.item(), totalReturn_val.item(), avg_loss.item(), avg_returns.item()]
 
 			txt_logger.info(
-				"U {} | F {} | G {} | D {} | EPS {:.3f} | L {:.3f} | R {:.3f} | Avg L {:.3f} | Avg R {:.3f}"
+				"U {} | F {} | G {} | D {} | EPS {:.3f} | LR {:.5f} | L {:.3f} | R {:.3f} | Avg L {:.3f} | Avg R {:.3f}"
 				.format(*data))
 
-			# header += ["Loss", "Returns", "Avg Loss", "Avg Returns"]
-			# data += [totalLoss_val, totalReturn_val, avg_loss, avg_returns]
+			header += ["Loss", "Returns", "Avg Loss", "Avg Returns"]
+			data += [totalLoss_val, totalReturn_val, avg_loss, avg_returns]
 
-
-			# txt_logger.info(
-			# 	"U {} | F {} | G {} | D {} | EPS {:.3f} | L {:.3f}"
-			# 	.format(*data))
 
 			if status["num_frames"] == 0:
 				csv_logger.writerow(header)
 			csv_logger.writerow(data)
 			csv_file.flush()
 
-		# Save status
+		# # Save status
 		# if args.save_interval > 0 and update % args.save_interval == 0:
 		# 	status = {"num_frames": num_frames, "update": update, "games": num_games}
 		# 	model.save_q_state(model_dir)

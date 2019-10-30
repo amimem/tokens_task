@@ -33,9 +33,9 @@ class SarsaAgent:
 	def get_actions(self, states):
 		q_val = self.model.get_qVal(states)
 		actions = self.policy_type(q_val)
-		return self._remap_actions(actions)
+		return self._mapFromIndexToTrueActions(actions)
 
-	def _remap_actions(self, actions):
+	def _mapFromIndexToTrueActions(self, actions):
 		if actions == 1:
 			return -1 
 		elif actions == 2:

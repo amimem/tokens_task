@@ -7,7 +7,7 @@ import unittest
 class TokensEnv(gym.Env):
 	metadata = {'render.modes': ['human']}
 
-	def __init__(self, seed=7):
+	def __init__(self, seed=7, terminal=3):
 
 		np.random.seed(seed)
 
@@ -19,6 +19,7 @@ class TokensEnv(gym.Env):
 		# initial condition
 		self.state = np.zeros(2) #index 0: Nt, index 1: ht
 		self.reset()
+		self.terminal = terminal
 		
 
 	def step(self, action):
@@ -30,8 +31,6 @@ class TokensEnv(gym.Env):
 
 		if action >1 or action <-1:
 			raise Exception('action should belong to this set: [-1,0,1]')
-
-		self.time_steps += 1
 
 		coinToss = np.random.uniform()
 		Nt_prev = self.state[0]
@@ -45,25 +44,56 @@ class TokensEnv(gym.Env):
 		else:
 			Nt = Nt_prev + 1
 
-		ht = ht_prev + self.time_steps * action
-		# print(type(action))
-		# print(type(Nt))
-
-		next_state = np.zeros(2,dtype=np.int64)
-		next_state[0] = Nt
-		next_state[1] = ht
-
-		if self.time_steps < 15:
-			reward = 0
+		if ht_prev == 0:
+			ht = ht_prev + (self.time_steps+1) * action
 
 		else:
-			reward = self._sign(Nt) * self._sign(ht)
+			ht = ht_prev
+
+		if self.time_steps == self.terminal:
+			reward = self._indicator(self._sign(Nt_prev),self._sign(ht))
 			next_state = self.reset()
 			is_done = True
 
-		self.state = next_state
+			return next_state, reward, is_done, self.time_steps
 
-		return next_state, reward, is_done, None
+		else:
+
+			# coinToss = np.random.uniform()
+			# Nt_prev = self.state[0]
+			# ht_prev = self.state[1]
+			# is_done = False
+
+			# #Go left if prob is less than 0.5, go right otw. 
+			# if coinToss <= 0.5:
+			# 	Nt = Nt_prev - 1
+
+			# else:
+			# 	Nt = Nt_prev + 1
+
+			# if ht_prev == 0:
+			# 	ht = ht_prev + self.time_steps * action
+			# else:
+			# 	ht = ht_prev
+			
+			next_state = np.zeros(2,dtype=np.int64)
+			next_state[0] = Nt
+			next_state[1] = ht
+			self.state = next_state
+
+			reward = 0
+			self.time_steps += 1
+
+
+		# else:
+		# 	reward = self._indicator(self._sign(Nt),self._sign(ht))
+		# 	next_state = self.reset()
+		# 	is_done = True
+
+			
+
+	
+		return next_state, reward, is_done, self.time_steps
 
 	def _sign(self, num):
 
@@ -75,6 +105,12 @@ class TokensEnv(gym.Env):
 		elif num > 0:
 			return 1
 
+		else:
+			return 0
+
+	def _indicator(self, num1, num2):
+		if num1 == num2:
+			return 1
 		else:
 			return 0
 

@@ -1,0 +1,15 @@
+main.py --seed 7 --lr 0.01
+
+Namespace(algo='q-learning', convg=0.5, env='tokens-v0', eps_final=0.001, eps_frames=75000, eps_start=1.0, frames=150000, games=500, gamma=0.99, log_interval=20000, lr=0.01, model=None, save_interval=10000, seed=7)
+
+Environments loaded
+
+Training status loaded
+
+U 20000 | F 20000 | G 6666 | D 2 | EPS 0.733 | L 421.123 | R 438.000 | Avg L 0.421 | Avg R 0.438
+U 40000 | F 40000 | G 13333 | D 4 | EPS 0.467 | L 350.007 | R 354.000 | Avg L 0.350 | Avg R 0.354
+U 60000 | F 60000 | G 20000 | D 7 | EPS 0.200 | L 273.535 | R 316.000 | Avg L 0.274 | Avg R 0.316
+U 80000 | F 80000 | G 26666 | D 9 | EPS 0.001 | L 475.732 | R 548.000 | Avg L 0.476 | Avg R 0.548
+U 100000 | F 100000 | G 33333 | D 12 | EPS 0.001 | L 438.444 | R 545.000 | Avg L 0.438 | Avg R 0.545
+U 120000 | F 120000 | G 40000 | D 14 | EPS 0.001 | L 344.074 | R 498.000 | Avg L 0.344 | Avg R 0.498
+U 140000 | F 140000 | G 46666 | D 17 | EPS 0.001 | L 344.726 | R 539.000 | Avg L 0.345 | Avg R 0.539

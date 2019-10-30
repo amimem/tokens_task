@@ -1,0 +1,14 @@
+update,frames,Games,duration,eps,Loss,Returns,Avg Loss,Avg Returns,Loss,Returns,Avg Loss,Avg Returns
+20000,20000,6666,2,0.7333466666666666,426.3748757601994,428,0.4263748757601994,0.428,426.37487576,428,0.42637487576,0.428
+update,frames,Games,duration,eps,Loss,Returns,Avg Loss,Avg Returns,Loss,Returns,Avg Loss,Avg Returns
+40000,40000,13333,5,0.46668,365.8805789404454,364,0.3658805789404454,0.364,365.88057894,364,0.36588057894,0.364
+update,frames,Games,duration,eps,Loss,Returns,Avg Loss,Avg Returns,Loss,Returns,Avg Loss,Avg Returns
+60000,60000,20000,7,0.20001333333333338,371.62116815776744,378,0.37162116815776747,0.378,371.621168158,378,0.371621168158,0.378
+update,frames,Games,duration,eps,Loss,Returns,Avg Loss,Avg Returns,Loss,Returns,Avg Loss,Avg Returns
+80000,80000,26666,10,0.001,355.2935722867803,365,0.3552935722867803,0.365,355.293572287,365,0.355293572287,0.365
+update,frames,Games,duration,eps,Loss,Returns,Avg Loss,Avg Returns,Loss,Returns,Avg Loss,Avg Returns
+100000,100000,33333,12,0.001,336.65291940420144,349,0.33665291940420145,0.349,336.652919404,349,0.336652919404,0.349
+update,frames,Games,duration,eps,Loss,Returns,Avg Loss,Avg Returns,Loss,Returns,Avg Loss,Avg Returns
+120000,120000,40000,15,0.001,335.92484135479816,353,0.33592484135479816,0.353,335.924841355,353,0.335924841355,0.353
+update,frames,Games,duration,eps,Loss,Returns,Avg Loss,Avg Returns,Loss,Returns,Avg Loss,Avg Returns
+140000,140000,46666,17,0.001,359.1279610522494,381,0.3591279610522494,0.381,359.127961052,381,0.359127961052,0.381

@@ -15,7 +15,7 @@ class GreedyPolicy(Policy):
 
 	def __call__(self, scores):
 		assert isinstance(scores, np.ndarray)
-		return np.argmax(scores, axis=1)
+		return np.argmax(scores, axis=0)
 
 class EpsilonGreedyPolicy(Policy):
 	"""
@@ -29,13 +29,20 @@ class EpsilonGreedyPolicy(Policy):
 	def __call__(self, scores):
 		assert isinstance(scores, np.ndarray)
 
-		batch_size, num_actions = scores.shape
-
-		eps_mask = np.random.random(size=batch_size) < self.epsilon
+		num_actions = len(scores)
+		eps_mask = np.random.random(size=1) < self.epsilon
 		actions = self.default_policy(scores)
 		rand_actions = np.random.choice(num_actions, size=sum(eps_mask))
-		actions[eps_mask] = rand_actions
-		return actions[0] #NEED TO FIX THIS TO USING NP ARRAY
+		
+		if eps_mask:
+
+			return rand_actions
+
+		else:
+
+			return actions
+
+		# return actions[0] #NEED TO FIX THIS TO USING NP ARRAY
 
 
 class EpsilonTracker():
