@@ -94,9 +94,19 @@ class TokensEnv(gym.Env):
 		return next_state, reward, is_done, None
 
 	def _fancy_discount_reward(self, reward):
+		'''
+		This function computes fancy discounting
+		: param reward (int) : reward value before any discounting is applied. Value should be 0 or 1. 
+		: return (float) : fancy discounted reward
+		'''
 		return reward *(1+self.gamma*(1-np.absolute(ht)/self.terminal)/(1+self.gamma*(1-np.absolute(ht)/self.terminal)))
 
 	def _sign(self, num):
+		'''
+		This function determines the sign of the input value.
+		: param num (int) : input
+		: return num (int) : sign of input
+		'''
 		assert isinstance(num, np.int64)
 
 		if num < 0:
@@ -109,18 +119,35 @@ class TokensEnv(gym.Env):
 			return 0
 
 	def _indicator(self, num1, num2):
+		'''
+		This function returns 1 if both inputs are the same value
+		: param num1 : input 1
+		: param num2 : input 2
+		: return num (int) : 1 if both inputs are the same and 0 otherwise
+		'''
 		if num1 == num2:
 			return 1
 		else:
 			return 0
 
 	def get_num_states(self):
-		return len(range(-15,16))*len(range(-15,16)) #-15 to 15 inclusive for Nt and -15 to 15 inclusive for ht
+		'''
+		This function computes the total number of states
+		: return (int) : total number of states
+		'''
+		return len(range(-self.terminal,self.terminal+1))*len(range(-self.terminal,self.terminal+1)) #-15 to 15 inclusive for Nt and -15 to 15 inclusive for ht
 
 	def get_num_actions(self):
+		'''
+		This function returns the number of available actions of the environment.
+		: return (int) : number of actions
+		'''
 		return self.num_actions
 
 	def reset(self):
+		'''
+		This function resets the environment by setting the states, time_steps to zero
+		'''
 		self.state = np.zeros(2, dtype=np.int64)
 		self.done = False
 		self.time_steps = 0
