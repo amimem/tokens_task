@@ -35,7 +35,7 @@ class TokensEnv(gym.Env):
 		'''
 		The function takes in action and send that action to the environment. 
 		: param action :(integer consisting of [-1,0,1])
-		: return next state, reward, is_done (boolean) and none (extra info just in case)
+		: return next state, reward, is_done (boolean) and in-game time steps
 		Representation used for actions:
 			i) action = 0 as do nothing
 			ii) action = -1, go left
@@ -74,7 +74,9 @@ class TokensEnv(gym.Env):
 		#If in-game time has reached max time step, assign a reward value if the correct side (based on sign) is chosen.
 		if self.time_steps == self.terminal:
 			reward = self._indicator(self._sign(Nt),self._sign(ht))
-			next_state = self.reset()
+			next_state = np.zeros(2,dtype=np.int64)
+			next_state[0] = Nt
+			next_state[1] = ht
 			is_done = True
 
 			#fancy discounting reward is applied if initialised when the environment is constructed
@@ -90,8 +92,11 @@ class TokensEnv(gym.Env):
 
 			reward = 0
 			self.time_steps += 1
+
+		return next_state, reward, is_done, self.time_steps, 
+
 	
-		return next_state, reward, is_done, None
+		
 
 	def _fancy_discount_reward(self, reward):
 		'''
@@ -152,4 +157,4 @@ class TokensEnv(gym.Env):
 		self.done = False
 		self.time_steps = 0
 
-		return self.state
+		return self.state, self.time_steps 
