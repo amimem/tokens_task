@@ -2,11 +2,12 @@ import numpy as np
 
 class Q_Table:
 
-	def __init__(self, num_states, num_actions, shape, converge_val): 
+	def __init__(self, num_states, num_actions, shape, converge_val, height): 
 		self.shape = shape
 		# self.prev_q_matrix = np.zeros((num_states, num_actions))
-		self.q_matrix = np.ones((num_states, num_actions))
+		self.q_matrix = np.ones((num_states, num_actions))*0.5
 		self.converge_val = converge_val
+		self.height = height
 
 	def get_qVal(self, states):
 		statesID = self.get_stateID(states)
@@ -49,7 +50,7 @@ class Q_Table:
 		temp_id = Nt * num_cols + ht
 		return temp_id
 
-	def get_TDerror(self, states, actions, next_states, next_actions, reward, gamma, is_done):
+	def get_TDerror(self, states, actions, next_states, next_actions, reward, gamma, is_done, algo):
 		statesID = self.get_stateID(states)
 		currentActionsIndex = self._mapFromTrueActionsToIndex(actions)
 		current_qVal = self.q_matrix[statesID, currentActionsIndex]
@@ -57,9 +58,14 @@ class Q_Table:
 		if is_done:
 			next_qVal = 0
 		else:
-			next_statesID = self.get_stateID(next_states)
-			nextActionsIndex = self._mapFromTrueActionsToIndex(next_actions)
-			next_qVal = self.q_matrix[next_statesID, nextActionsIndex]
+			if algo == 'sarsa':
+				next_statesID = self.get_stateID(next_states)
+				nextActionsIndex = self._mapFromTrueActionsToIndex(next_actions)
+				next_qVal = self.q_matrix[next_statesID, nextActionsIndex]
+
+			elif algo == 'q-learning':
+				next_statesID = self.get_stateID(next_states)
+				next_qVal = np.max(self.q_matrix[next_statesID, :])
 
 		return reward + (gamma*next_qVal) - current_qVal
 
@@ -68,9 +74,9 @@ class Q_Table:
 
 	def _augState(self, stateVal):
 		"""
-		Augment state value so that [-3,3] goes to [0,6] 
+		Eg. Augment state value so that [-15,15] goes to [0,30] 
 		"""
-		return stateVal+3
+		return stateVal + self.height
 
 	def _mapFromTrueActionsToIndex(self, actions):
 		if actions == -1:
