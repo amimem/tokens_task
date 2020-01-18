@@ -69,8 +69,8 @@ class Q_Table:
 
 		return reward + (gamma*next_qVal) - current_qVal
 
-	def save_q_state(self, file):
-		np.save(file+'/q_mat', self.q_matrix)
+	def save_q_state(self, file, timestep):
+		np.save(file+'/q_mat_'+str(timestep), self.q_matrix)
 
 	def _augState(self, stateVal):
 		"""

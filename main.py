@@ -248,11 +248,11 @@ def main():
 
 		# Save status
 		if args.save_interval > 0 and num_games % args.save_interval == 0:
-			status = {"num_frames": num_frames, "update": update, "games": num_games, "totalReturns" : totalReturns}
-			model.save_q_state(model_dir)
+			# status = {"num_frames": num_frames, "update": update, "games": num_games, "totalReturns" : totalReturns}
+			model.save_q_state(model_dir, num_games)
 			np.save(model_dir+'/decisionTime_'+str(num_games)+'.npy', decisionTime)
 			# txt_logger.info("Status saved")
-			utils.save_status(status, model_dir)
+			# utils.save_status(status, model_dir)
 
 if __name__ == '__main__':
 	main()
