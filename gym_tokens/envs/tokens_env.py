@@ -74,7 +74,7 @@ class TokensEnv(gym.Env):
 		#If in-game time has reached max time step, assign a reward value if the correct side (based on sign) is chosen.
 		if self.time_steps == self.terminal:
 			reward = self._indicator(self._sign(Nt),self._sign(ht))
-			next_state = np.zeros(2,dtype=np.int64)
+			next_state = np.zeros(3,dtype=np.int64)
 			next_state[0] = Nt
 			next_state[1] = ht
 			is_done = True
@@ -85,7 +85,7 @@ class TokensEnv(gym.Env):
 
 		else:
 
-			next_state = np.zeros(2,dtype=np.int64)
+			next_state = np.zeros(3,dtype=np.int64)
 			next_state[0] = Nt
 			next_state[1] = ht
 			self.state = next_state
@@ -93,6 +93,7 @@ class TokensEnv(gym.Env):
 			reward = 0
 			self.time_steps += 1
 
+		next_state[2] = self.time_steps
 		return next_state, reward, is_done, self.time_steps, 
 
 	
@@ -153,7 +154,7 @@ class TokensEnv(gym.Env):
 		'''
 		This function resets the environment by setting the states, time_steps to zero
 		'''
-		self.state = np.zeros(2, dtype=np.int64)
+		self.state = np.zeros(3, dtype=np.int64)
 		self.done = False
 		self.time_steps = 0
 

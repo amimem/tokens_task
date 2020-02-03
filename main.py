@@ -72,7 +72,7 @@ def main():
 	# Set seed for all randomness sources
 	utils.seed(args.seed)
 
-	numNT = (args.height * 2) + 1
+	numNT = (args.height * 2) + 1 
 	numHT = (args.height * 2) + 1
 
 	if args.fast_block:
@@ -98,7 +98,7 @@ def main():
 	num_games_frames = args.height * args.games
 
 	# model = lib.Q_Table(env.get_num_states(), env.get_num_actions(), (numNT, numHT), args.convg)
-	model = lib.Q_Table(numNT*numHT, num_actions, (numNT, numHT), args.convg, args.height)
+	model = lib.Q_Table(numNT*numHT*(args.height+2), num_actions, (numNT, numHT, args.height), args.convg, args.height)
 
 	
 
@@ -238,6 +238,9 @@ def main():
 
 			csv_header = ["trajectory", "choice_made", "correct_choice", "decision_time", "reward_received"]
 			csv_data = [traj_group[num_games_prevs], choice_made[num_games_prevs], correct_choice[num_games_prevs], finalDecisionTime[num_games_prevs], finalRewardPerGame[num_games_prevs]]
+
+			# print(traj_group[num_games_prevs])
+			# print(choice_made[num_games_prevs])
 
 			if num_games == 1:
 				csv_logger.writerow(csv_header)
