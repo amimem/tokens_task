@@ -99,13 +99,13 @@ class TokensEnv(gym.Env):
 	
 		
 
-	def _fancy_discount_reward(self, reward):
+	def _fancy_discount_reward(self, reward, inter_trial_interval = 7.5):
 		'''
 		This function computes fancy discounting
 		: param reward (int) : reward value before any discounting is applied. Value should be 0 or 1. 
 		: return (float) : fancy discounted reward
 		'''
-		return reward *(1+self.gamma*(1-np.absolute(ht)/self.terminal)/(1+self.gamma*(1-np.absolute(ht)/self.terminal)))
+		return reward / self.terminal / (1 + self.gamma * (1 - np.absolute(self.state[1]) / self.terminal) + inter_trial_interval/self.terminal)
 
 	def _sign(self, num):
 		'''
