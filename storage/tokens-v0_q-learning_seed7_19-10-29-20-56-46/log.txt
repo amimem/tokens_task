@@ -1,8 +1,0 @@
-main.py --seed 7
-
-Namespace(algo='q-learning', convg=0.5, env='tokens-v0', eps_final=0.01, eps_frames=450000, eps_start=1.0, frames=1500000, games=500, gamma=0.99, log_interval=10000, lr=0.0001, model=None, save_interval=10000, seed=7)
-
-Environments loaded
-
-Training status loaded
-

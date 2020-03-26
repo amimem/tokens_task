@@ -1,6 +1,0 @@
-update,frames,Games,duration,eps,Loss,Returns,Avg Loss,Avg Returns,Loss,Returns,Avg Loss,Avg Returns
-10000,10000,666,2,0.993334,111980.0,332,168.13813813813815,0.4984984984984985,111980.0,332,168.138138138,0.498498498498
-update,frames,Games,duration,eps,Loss,Returns,Avg Loss,Avg Returns,Loss,Returns,Avg Loss,Avg Returns
-20000,20000,1333,6,0.9866673333333333,444584.0,508,333.5213803450863,0.508,444584.0,508,333.521380345,0.508
-update,frames,Games,duration,eps,Loss,Returns,Avg Loss,Avg Returns,Loss,Returns,Avg Loss,Avg Returns
-30000,30000,2000,13,0.9800006666666666,1009423.0,517,504.7115,0.517,1009423.0,517,504.7115,0.517

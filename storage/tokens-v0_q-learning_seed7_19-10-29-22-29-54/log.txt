@@ -1,9 +1,0 @@
-main.py --seed 7 --lr 0.0001
-
-Namespace(algo='q-learning', convg=0.5, env='tokens-v0', eps_final=0.001, eps_frames=37500, eps_start=1.0, frames=150000, games=500, gamma=0.99, log_interval=10000, lr=0.0001, model=None, save_interval=10000, seed=7)
-
-Environments loaded
-
-Training status loaded
-
-U 10000 | F 10000 | G 3333 | D 1 | EPS 0.733 | L 420.896 | R 421.000 | Avg L 0.421 | Avg R 0.421
