@@ -1,4 +1,5 @@
 import numpy as np
+from scipy.special import softmax
 
 class Policy:
 	"""
@@ -91,6 +92,21 @@ class EpsilonGreedyGameDecisionPolicy(Policy):
 
 		else:
 			return actions
+
+class SoftmaxPolicy(Policy):
+	"""
+	Choose actions according to their softmax probabilty
+	"""
+
+	def __init__(self, temperature = 1):
+		self.temperature = temperature
+
+	def __call__(self, scores):
+		assert isinstance(scores, np.ndarray)
+		num_actions = len(scores)
+		probs = softmax(scores)
+		action = np.random.choice(num_actions, p = probs)
+		return action
 
 
 class EpsilonTracker():
