@@ -1,6 +1,8 @@
 /storage/
+/notebooks/*.pdf
 __pycache__
 .ipynb_checkpoints/
 *.swp
 *.kate-swp
 *.egg
+*.pyc
