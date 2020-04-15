@@ -48,6 +48,10 @@ def main():
 	parser.add_argument('--fancy_discount', help='use fancy discounting rewards',action='store_true')
 	parser.add_argument('--fast_block', help='fast block discounting',action='store_true')
 	parser.add_argument('--fancy_eps', help='try to do epsilon-greedy per game rather than per step',action='store_true')
+	parser.add_argument("--tmp_start", type=float, default=1.0, help="initial temperature value")
+	parser.add_argument("--tmp_final", type=float, default=0.01, help="final temperature value")
+	parser.add_argument("--tmp_games", type=int, default=10000, help="number of frames for temperature to go from init value to final value (default: 75k)")
+	parser.add_argument('--softmax', help='use softmax exploration',action='store_true')
 
 
 	args = parser.parse_args()
@@ -100,7 +104,9 @@ def main():
 	# model = lib.Q_Table(env.get_num_states(), env.get_num_actions(), (numNT, numHT), args.convg)
 	model = lib.Q_Table(numNT*numHT*(args.height+2), num_actions, (numNT, numHT, args.height), args.convg, args.height)
 
-	
+	if args.softmax:
+		policy = lib.SoftMaxPolicy()
+		tmp_track = lib.TemperatureTracker(args.tmp_start, args.tmp_final, args.tmp_games, policy)
 
 	if args.fancy_eps:
 		#TODO
