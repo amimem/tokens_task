@@ -108,6 +108,22 @@ class SoftmaxPolicy(Policy):
 		action = np.random.choice(num_actions, p = probs)
 		return action
 
+class EpsilonSoftPolicy(Policy):
+	"""
+	Choose actions according to their softmax probabilty
+	"""
+
+	def __init__(self, epsilon = 0.01):
+		self.epsilon = epsilon
+
+	def __call__(self, scores):
+		assert isinstance(scores, np.ndarray)
+		num_actions = len(scores)
+		probs = [self.epsilon/float(num_actions)]*num_actions
+		probs[np.argmax(scores)] += 1 - self.epsilon
+		action = np.random.choice(num_actions, p = probs)
+		return action
+
 
 class EpsilonTracker():
 
@@ -129,7 +145,7 @@ class TemperatureTracker():
 		self.tmp_final = tmp_final
 		self.num_frames = num_frames
 		self.policy = policy
-		
+
 	def set_eps(self, frame):
 		tmp = self.tmp_start - frame/float(self.num_frames)
 		self.policy.temperature =  max(tmp, self.tmp_final)
