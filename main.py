@@ -106,7 +106,7 @@ def main():
 	model = lib.Q_Table(numNT*numHT*(args.height+2), num_actions, (numNT, numHT, args.height), args.convg, args.height)
 
 	if args.softmax:
-		policy = lib.SoftMaxPolicy()
+		policy = lib.SoftmaxPolicy()
 		tmp_track = lib.TemperatureTracker(args.tmp_start, args.tmp_final, args.tmp_games, policy)
 
 	if args.eps_soft:
