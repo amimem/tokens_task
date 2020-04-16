@@ -229,15 +229,24 @@ def main():
 			header = ["update", "frames", "Games", "duration"]
 			data = [update, num_frames, num_games, duration]
 
-			header += ["eps", "lr", "last"]
-			data += [policy.epsilon, lr, last_choice]
+			if args.softmax:
+				header += ["tmp", "lr", "last"]
+				data += [policy.temperature, lr, last_choice]
+			else:
+				header += ["eps", "lr", "last"]
+				data += [policy.epsilon, lr, last_choice]
 
 			header += ["Loss", "Returns", "Avg Loss", "Avg Returns", "Correct Percentage", "Recent Correct", "decision_time"]
 			data += [totalLoss_val.item(), totalReturn_val.item(), avg_loss.item(), avg_returns.item(), numCorrectChoice/num_games, recent_correct, finalDecisionTime[num_games_prevs]]
 
-			txt_logger.info(
-				"U {} | F {} | G {} | D {} | EPS {:.3f} | LR {:.5f} | Last {} | L {:.3f} | R {:.3f} | Avg L {:.3f} | Avg R {:.3f} | Avg C {:.3f} | Rec C {:.3f} | DT {}"
-				.format(*data))
+			if args.softmax:
+				txt_logger.info(
+					"U {} | F {} | G {} | D {} | TMP {:.3f} | LR {:.5f} | Last {} | L {:.3f} | R {:.3f} | Avg L {:.3f} | Avg R {:.3f} | Avg C {:.3f} | Rec C {:.3f} | DT {}"
+					.format(*data))
+			else:
+				txt_logger.info(
+					"U {} | F {} | G {} | D {} | EPS {:.3f} | LR {:.5f} | Last {} | L {:.3f} | R {:.3f} | Avg L {:.3f} | Avg R {:.3f} | Avg C {:.3f} | Rec C {:.3f} | DT {}"
+					.format(*data))
 
 			# header += ["Loss", "Returns", "Avg Loss", "Avg Returns"]
 			# data += [totalLoss_val, totalReturn_val, avg_loss, avg_returns]
