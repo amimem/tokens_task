@@ -52,6 +52,7 @@ def main():
 	parser.add_argument("--tmp_final", type=float, default=0.01, help="final temperature value")
 	parser.add_argument("--tmp_games", type=int, default=10000, help="number of frames for temperature to go from init value to final value (default: 75k)")
 	parser.add_argument('--softmax', help='use softmax exploration',action='store_true')
+	parser.add_argument('--eps_soft', help='use epsilon soft exploration',action='store_true')
 
 
 	args = parser.parse_args()
@@ -107,6 +108,10 @@ def main():
 	if args.softmax:
 		policy = lib.SoftMaxPolicy()
 		tmp_track = lib.TemperatureTracker(args.tmp_start, args.tmp_final, args.tmp_games, policy)
+
+	if args.eps_soft:
+		policy = lib.EpsilonSoftPolicy()
+		eps_track = lib.EpsilonTracker(args.eps_start,args.eps_final, args.eps_games, policy)
 
 	if args.fancy_eps:
 		#TODO
