@@ -100,7 +100,7 @@ def main():
 
 	num_states = env.get_num_states()
 	num_actions = env.get_num_actions()
-	num_games_frames = args.height * args.games
+	num_games_frames = args.height * args.games # Total time-steps
 
 	# model = lib.Q_Table(env.get_num_states(), env.get_num_actions(), (numNT, numHT), args.convg)
 	model = lib.Q_Table(numNT*numHT*(args.height+2), num_actions, (numNT, numHT, args.height), args.convg, args.height)
