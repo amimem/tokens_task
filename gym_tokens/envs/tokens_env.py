@@ -105,7 +105,7 @@ class TokensEnv(gym.Env):
 		: param reward (int) : reward value before any discounting is applied. Value should be 0 or 1. 
 		: return (float) : fancy discounted reward
 		'''
-		return reward / self.terminal / (1 + self.gamma * (1 - np.absolute(self.state[1]) / self.terminal) + inter_trial_interval/self.terminal)
+		return reward / self.terminal / (np.absolute(self.state[1])/self.terminal + self.gamma * (1 - np.absolute(self.state[1]) / self.terminal) + inter_trial_interval/self.terminal)
 
 	def _sign(self, num):
 		'''
