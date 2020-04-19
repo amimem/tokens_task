@@ -172,11 +172,11 @@ def main():
 			tmp_track.set_tmp(num_games) # decrease temperature from game to game
 			#NOTE change per episode or per time_step?
 
-		if args.eps_soft:
+		elif args.eps_soft:
 			eps_track.set_eps(num_games) # decrease epsilon from game to game
 			#NOTE change per episode or per time_step?
 
-		if args.fancy_eps:
+		elif args.fancy_eps:
 			eps_track.set_eps(num_games) # epsilon in fancy eps is changed from game to game
 
 		else:
