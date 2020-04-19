@@ -112,7 +112,10 @@ def main():
 
 	elif args.eps_soft:
 		policy = lib.EpsilonSoftPolicy()
-		eps_track = lib.EpsilonTracker(args.eps_start,args.eps_final, args.eps_games, policy)
+		if args.fancy_eps:
+			eps_track = lib.EpsilonTracker(args.eps_start,args.eps_final, args.eps_games, policy)
+		else:
+			eps_track = lib.EpsilonTracker(args.eps_start,args.eps_final, args.eps_games*args.height, policy)
 
 	elif args.fancy_eps:
 		#TODO
@@ -172,8 +175,11 @@ def main():
 			#NOTE change per episode or per time_step?
 
 		elif args.eps_soft:
-			eps_track.set_eps(num_games) # decrease epsilon from game to game
 			#NOTE change per episode or per time_step?
+			if args.fancy_eps:
+				eps_track.set_eps(num_games) # decrease epsilon from game to game
+			else:
+				eps_track.set_eps(num_frames)
 
 		elif args.fancy_eps:
 			eps_track.set_eps(num_games) # epsilon in fancy eps is changed from game to game
