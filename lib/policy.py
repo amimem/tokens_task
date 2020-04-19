@@ -99,12 +99,12 @@ class SoftmaxPolicy(Policy):
 	"""
 
 	def __init__(self, temperature = 1):
-		self.temperature = temperature
+		self.temperature: float = temperature
 
 	def __call__(self, scores):
 		assert isinstance(scores, np.ndarray)
 		num_actions = len(scores)
-		probs = softmax(scores)
+		probs = softmax(scores/self.temperature)
 		action = np.random.choice(num_actions, p = probs)
 		return action
 
