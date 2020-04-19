@@ -146,6 +146,6 @@ class TemperatureTracker():
 		self.num_frames = num_frames
 		self.policy = policy
 
-	def set_eps(self, frame):
+	def set_tmp(self, frame):
 		tmp = self.tmp_start - frame/float(self.num_frames)
 		self.policy.temperature =  max(tmp, self.tmp_final)
