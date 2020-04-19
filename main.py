@@ -110,15 +110,14 @@ def main():
 		policy = lib.SoftmaxPolicy()
 		tmp_track = lib.TemperatureTracker(args.tmp_start, args.tmp_final, args.tmp_games, policy) # tmp is changed from game to game
 
-	if args.eps_soft:
+	elif args.eps_soft:
 		policy = lib.EpsilonSoftPolicy()
 		eps_track = lib.EpsilonTracker(args.eps_start,args.eps_final, args.eps_games, policy)
 
-	if args.fancy_eps:
+	elif args.fancy_eps:
 		#TODO
 		policy = lib.EpsilonGreedyGamePolicy()
 		eps_track = lib.EpsilonTracker(args.eps_start,args.eps_final, args.eps_games, policy)
-
 
 	else:
 		policy = lib.EpsilonGreedyPolicy()
