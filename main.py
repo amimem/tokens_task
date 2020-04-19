@@ -129,7 +129,7 @@ def main():
 	elif args.algo == 'q-learning':
 		monkeyAgent = lib.QlAgent(policy, model, args.height)
 
-	lr_sched = lib.LRscheduler(args.lr, args.lr_final, total_run_time_steps*10*0.8) 
+	lr_sched = lib.LRscheduler(args.lr, args.lr_final, total_run_time_steps) 
 	#NOTE is there is reason that lr is not decreased to the final value during the experiment?
 
 	num_frames = status["num_frames"]
