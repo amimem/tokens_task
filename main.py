@@ -48,6 +48,7 @@ def main():
 	parser.add_argument('--fancy_discount', help='use fancy discounting rewards',action='store_true')
 	parser.add_argument('--fast_block', help='fast block discounting',action='store_true')
 	parser.add_argument('--fancy_eps', help='try to do epsilon-greedy per game rather than per step',action='store_true')
+	parser.add_argument('--fancy_tmp', help='try to do softmax per game rather than per step',action='store_true')
 	parser.add_argument("--tmp_start", type=float, default=1.0, help="initial temperature value")
 	parser.add_argument("--tmp_final", type=float, default=0.01, help="final temperature value")
 	parser.add_argument("--tmp_games", type=int, default=10000, help="number of frames for temperature to go from init value to final value (default: 75k)")
@@ -108,7 +109,10 @@ def main():
 
 	if args.softmax:
 		policy = lib.SoftmaxPolicy()
-		tmp_track = lib.TemperatureTracker(args.tmp_start, args.tmp_final, args.tmp_games, policy) # tmp is changed from game to game
+		if args.fancy_tmp:
+			tmp_track = lib.TemperatureTracker(args.tmp_start, args.tmp_final, args.tmp_games, policy) # tmp is changed from game to game
+		else:
+			tmp_track = lib.TemperatureTracker(args.tmp_start, args.tmp_final, args.tmp_games*args.height, policy)
 
 	elif args.eps_soft:
 		policy = lib.EpsilonSoftPolicy()
@@ -171,7 +175,11 @@ def main():
 		traj.append(state[0].tolist())
 
 		if args.softmax:
-			tmp_track.set_tmp(num_games) # decrease temperature from game to game
+			if args.fancy_tmp:
+				tmp_track.set_tmp(num_games)
+			else:
+				tmp_track.set_tmp(num_frames)
+			 # decrease temperature from game to game
 			#NOTE change per episode or per time_step?
 
 		elif args.eps_soft:
