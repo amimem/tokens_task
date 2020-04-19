@@ -109,8 +109,6 @@ def main():
 	if args.softmax:
 		policy = lib.SoftmaxPolicy()
 		tmp_track = lib.TemperatureTracker(args.tmp_start, args.tmp_final, args.tmp_games, policy) # tmp is changed from game to game
-		#FIXME change per episode or per time_step?
-		#BUG tracker is never called
 
 	if args.eps_soft:
 		policy = lib.EpsilonSoftPolicy()
@@ -169,6 +167,10 @@ def main():
 	while num_frames <= total_run_time_steps: 
 
 		traj.append(state[0].tolist())
+
+		if args.softmax:
+			tmp_track.set_tmp(num_games) # decrease temperature from game to game
+			#NOTE change per episode or per time_step?
 
 		if args.fancy_eps:
 			eps_track.set_eps(num_games) # epsilon in fancy eps is changed from game to game
