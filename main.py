@@ -272,11 +272,11 @@ def main():
 
 			if args.softmax:
 				txt_logger.info(
-					"U {} | F {} | G {} | D {} | TMP {:.3f} | LR {:.5f} | Last {} | L {:.3f} | R {:.3f} | Avg L {:.3f} | Avg R {:.3f} | Avg C {:.3f} | Rec C {:.3f} | DT {}"
+					"U {} | F {} | G {} | D {} | TMP {:.5f} | LR {:.5f} | Last {} | L {:.3f} | R {:.3f} | Avg L {:.3f} | Avg R {:.3f} | Avg C {:.3f} | Rec C {:.3f} | DT {}"
 					.format(*data))
 			else:
 				txt_logger.info(
-					"U {} | F {} | G {} | D {} | EPS {:.3f} | LR {:.5f} | Last {} | L {:.3f} | R {:.3f} | Avg L {:.3f} | Avg R {:.3f} | Avg C {:.3f} | Rec C {:.3f} | DT {}"
+					"U {} | F {} | G {} | D {} | EPS {:.5f} | LR {:.5f} | Last {} | L {:.3f} | R {:.3f} | Avg L {:.3f} | Avg R {:.3f} | Avg C {:.3f} | Rec C {:.3f} | DT {}"
 					.format(*data))
 
 			# header += ["Loss", "Returns", "Avg Loss", "Avg Returns"]
