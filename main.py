@@ -35,7 +35,7 @@ def main():
 	parser.add_argument("--model", default=None, help="name of the model (default: {ENV}_{ALGO}_{TIME})")
 	parser.add_argument("--seed", type=int, default=7, help="random seed (default: 7)")
 	parser.add_argument("--log_interval", type=int, default=1, help="number of updates between two logs (default: 1)")
-	parser.add_argument("--algo", default='sarsa', help="algorithm to use: sarsa | q-learning | e-sarsa")
+	parser.add_argument("--algo", default='sarsa', help="algorithm to use: sarsa | q-learning | e-sarsa | double-q")
 	parser.add_argument("--convg", type=float, default=0.00001, help="convergence value")
 	parser.add_argument("--lr", type=float, default=0.1, help="learning rate")
 	parser.add_argument("--lr_final", type=float, default=0.0001, help="learning rate")
@@ -105,6 +105,9 @@ def main():
 
 	# model = lib.Q_Table(env.get_num_states(), env.get_num_actions(), (numNT, numHT), args.convg)
 	model = lib.Q_Table(numNT*numHT*(args.height+2), num_actions, (numNT, numHT, args.height), args.convg, args.height) 
+	if args.algo == 'double-q':
+		model2 = lib.Q_Table(numNT*numHT*(args.height+2), num_actions, (numNT, numHT, args.height), args.convg, args.height)
+
 	#NOTE why the number of states is the way it is ? num_states x (height + 2)
 
 	if args.softmax:
@@ -138,6 +141,9 @@ def main():
 
 	elif args.algo == 'e-sarsa':
 		monkeyAgent = lib.ExpectedSARSA(policy, model, args.height)
+
+	elif args.algo == 'double-q':
+		monkeyAgent = lib.DoubleQLearning(policy, model, model2, args.height)
 
 	lr_sched = lib.LRscheduler(args.lr, args.lr_final, total_run_time_steps) 
 	#NOTE is there is reason that lr is not decreased to the final value during the experiment?
@@ -213,14 +219,24 @@ def main():
 		if args.algo == 'sarsa':
 			next_act = monkeyAgent.get_actions(next_state, False, game_time_step)
 			loss = model.get_TDerror(state, action, next_state, next_act, reward, args.gamma, is_done, args.algo)
+			converged = model.update_qVal(lr, state, action, loss)
 		elif args.algo == 'e-sarsa':
 			next_act, probs = monkeyAgent.get_actions(next_state, True, game_time_step)
 			loss = model.get_TDerror(state, action, next_state, probs, reward, args.gamma, is_done, args.algo)
+			converged = model.update_qVal(lr, state, action, loss)
 		else:
 			next_act = None
-			loss = model.get_TDerror(state, action, next_state, next_act, reward, args.gamma, is_done, args.algo)
-		
-		converged = model.update_qVal(lr, state, action, loss)
+			if args.algo == 'double-q':
+				if np.random.binomial(1,0.5):
+					loss = model.get_TDerror(state, action, next_state, next_act, reward, args.gamma, is_done, args.algo, model2)
+					converged = model.update_qVal(lr, state, action, loss)
+				else:
+					loss2 = model2.get_TDerror(state, action, next_state, next_act, reward, args.gamma, is_done, args.algo, model)
+					converged = model2.update_qVal(lr, state, action, loss2)
+			else: # for q-learning
+				loss = model.get_TDerror(state, action, next_state, next_act, reward, args.gamma, is_done, args.algo)
+				converged = model.update_qVal(lr, state, action, loss)
+
 		totalLoss.append(loss) # loss trajectory
 
 		if is_done:
