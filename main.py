@@ -35,7 +35,7 @@ def main():
 	parser.add_argument("--model", default=None, help="name of the model (default: {ENV}_{ALGO}_{TIME})")
 	parser.add_argument("--seed", type=int, default=7, help="random seed (default: 7)")
 	parser.add_argument("--log_interval", type=int, default=1, help="number of updates between two logs (default: 1)")
-	parser.add_argument("--algo", default='sarsa', help="algorithm to use: sarsa | q-learning")
+	parser.add_argument("--algo", default='sarsa', help="algorithm to use: sarsa | q-learning | e-sarsa")
 	parser.add_argument("--convg", type=float, default=0.00001, help="convergence value")
 	parser.add_argument("--lr", type=float, default=0.1, help="learning rate")
 	parser.add_argument("--lr_final", type=float, default=0.0001, help="learning rate")
@@ -136,6 +136,9 @@ def main():
 	elif args.algo == 'q-learning':
 		monkeyAgent = lib.QlAgent(policy, model, args.height)
 
+	elif args.algo == 'e-sarsa':
+		monkeyAgent = lib.ExpectedSARSA(policy, model, args.height)
+
 	lr_sched = lib.LRscheduler(args.lr, args.lr_final, total_run_time_steps) 
 	#NOTE is there is reason that lr is not decreased to the final value during the experiment?
 
@@ -195,7 +198,7 @@ def main():
 		else:
 			eps_track.set_eps(num_frames) # otherwise it is changes timestep to timestep
 
-		action = monkeyAgent.get_actions(state, game_time_step)
+		action = monkeyAgent.get_actions(state, False, game_time_step)
 
 		next_state, reward, is_done, game_time_step = env.step(action)
 
@@ -207,8 +210,16 @@ def main():
 
 		lr = lr_sched.get_lr(num_frames) # learning rate is changed from timestep to timestep
 		
-		next_act = monkeyAgent.get_actions(next_state, game_time_step)
-		loss = model.get_TDerror(state, action, next_state, next_act, reward, args.gamma, is_done, args.algo)
+		if args.algo == 'sarsa':
+			next_act = monkeyAgent.get_actions(next_state, False, game_time_step)
+			loss = model.get_TDerror(state, action, next_state, next_act, reward, args.gamma, is_done, args.algo)
+		elif args.algo == 'e-sarsa':
+			next_act, probs = monkeyAgent.get_actions(next_state, True, game_time_step)
+			loss = model.get_TDerror(state, action, next_state, probs, reward, args.gamma, is_done, args.algo)
+		else:
+			next_act = None
+			loss = model.get_TDerror(state, action, next_state, next_act, reward, args.gamma, is_done, args.algo)
+		
 		converged = model.update_qVal(lr, state, action, loss)
 		totalLoss.append(loss) # loss trajectory
 
