@@ -51,7 +51,7 @@ class Q_Table:
 		temp_id_time = temp_id*(timestep+1) + states[2]
 		return temp_id_time
 
-	def get_TDerror(self, states, actions, next_states, next_actions, reward, gamma, is_done, algo):
+	def get_TDerror(self, states, actions, next_states, next_actions, reward, gamma, is_done, algo, model2 = None):
 		statesID = self.get_stateID(states)
 		currentActionsIndex = self._mapFromTrueActionsToIndex(actions)
 		current_qVal = self.q_matrix[statesID, currentActionsIndex]
@@ -71,6 +71,9 @@ class Q_Table:
 			elif algo == 'e-sarsa':
 				next_statesID = self.get_stateID(next_states)
 				next_qVal = np.sum(np.multiply(self.q_matrix[next_statesID, :], next_actions))
+
+			elif algo == 'double-q':
+				next_qVal = model2.q_matrix[next_statesID, np.argmax(self.q_matrix[next_statesID, :])]
 
 		return reward + (gamma*next_qVal) - current_qVal
 
