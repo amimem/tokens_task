@@ -73,6 +73,7 @@ class Q_Table:
 				next_qVal = np.sum(np.multiply(self.q_matrix[next_statesID, :], next_actions))
 
 			elif algo == 'double-q':
+				next_statesID = self.get_stateID(next_states)
 				next_qVal = model2.q_matrix[next_statesID, np.argmax(self.q_matrix[next_statesID, :])]
 
 		return reward + (gamma*next_qVal) - current_qVal
