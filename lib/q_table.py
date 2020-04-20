@@ -68,6 +68,10 @@ class Q_Table:
 				next_statesID = self.get_stateID(next_states)
 				next_qVal = np.max(self.q_matrix[next_statesID, :])
 
+			elif algo == 'e-sarsa':
+				next_statesID = self.get_stateID(next_states)
+				next_qVal = np.sum(np.multiply(self.q_matrix[next_statesID, :], next_actions))
+
 		return reward + (gamma*next_qVal) - current_qVal
 
 	def save_q_state(self, file, timestep):
