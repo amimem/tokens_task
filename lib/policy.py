@@ -37,10 +37,10 @@ class EpsilonGreedyPolicy(Policy):
 		
 		if eps_mask:
 
-			return rand_actions
+			return rand_actions, None
 
 		else:
-			return actions
+			return actions, None
 
 class EpsilonGreedyGamePolicy(Policy):
 	"""
@@ -61,10 +61,10 @@ class EpsilonGreedyGamePolicy(Policy):
 		rand_actions = np.random.choice(num_actions, size=sum(eps_mask), p=[self.epsilon, prob_left_right_action, prob_left_right_action])
 
 		if eps_mask:
-			return rand_actions
+			return rand_actions, None
 
 		else:
-			return actions
+			return actions, None
 
 class EpsilonGreedyGameDecisionPolicy(Policy):
 	"""
@@ -88,10 +88,10 @@ class EpsilonGreedyGameDecisionPolicy(Policy):
 
 
 		if eps_mask:
-			return rand_actions
+			return rand_actions, None
 
 		else:
-			return actions
+			return actions, None
 
 class SoftmaxPolicy(Policy):
 	"""
@@ -106,7 +106,7 @@ class SoftmaxPolicy(Policy):
 		num_actions = len(scores)
 		probs = softmax(scores/self.temperature)
 		action = np.random.choice(num_actions, p = probs)
-		return action
+		return action, probs
 
 class EpsilonSoftPolicy(Policy):
 	"""
@@ -122,7 +122,7 @@ class EpsilonSoftPolicy(Policy):
 		probs = [self.epsilon/float(num_actions)]*num_actions
 		probs[np.argmax(scores)] += 1 - self.epsilon
 		action = np.random.choice(num_actions, p = probs)
-		return action
+		return action, probs
 
 
 class EpsilonTracker():
