@@ -122,3 +122,39 @@ class ExpectedSARSA:
 
 
 		
+
+class DoubleQLearning:
+	"""
+	Double Q-Learning
+	"""
+	def __init__(self, policy_type, model1 , model2, max_steps):
+		self.policy_type = policy_type
+		self.model1 = model1
+		self.model2 = model2
+		self.max_steps = max_steps
+
+	def get_actions(self, states, get_probs=False, game_time_step=None):
+		q_val = self.model1.get_qVal(states) + self.model2.get_qVal(states)
+		actions, probs = self.policy_type(q_val)
+		action_mapped = self._mapFromIndexToTrueActions(actions)
+
+		if game_time_step == self.max_steps and action_mapped == 0:
+			if get_probs:
+				return random.choice([-1,1]), probs
+			else:
+				return random.choice([-1,1])
+
+		else:
+			if get_probs:
+				return action_mapped, probs
+			else:
+				return action_mapped
+		# return self._mapFromIndexToTrueActions(actions)
+
+	def _mapFromIndexToTrueActions(self, actions):
+		if actions == 1:
+			return -1 
+		elif actions == 2:
+			return 1
+		else:
+			return 0
