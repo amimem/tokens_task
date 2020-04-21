@@ -7,6 +7,7 @@ import gym
 import gym_tokens
 import numpy as np
 from itertools import count
+import random
 
 import torch
 import torch.nn as nn
@@ -22,6 +23,7 @@ log_interval = 1
 
 env = gym.make('tokens-v0', gamma=0.75, seed=seed, terminal=15, fancy_discount=False)
 env.seed(seed)
+random.seed(seed)
 torch.manual_seed(seed)
 
 def _mapFromIndexToTrueActions(actions):
@@ -105,11 +107,21 @@ def _sign(num):
 returns = []
 num_correct= 0
 for i_episode in count(1):
-	state, _ = env.reset()
+	state, ts = env.reset()
 	ep_reward = 0
 	for t in range(1, 10000):  # Don't infinite loop while learning
+	
 		action = select_action(state)
-		state, reward, done, _ = env.step(_mapFromIndexToTrueActions(action))
+		action = _mapFromIndexToTrueActions(action)
+
+		#FIXME Actions are chosen even if they cause no effect on state.
+		#their log prob is used to adjust the weight
+
+		if ts == 15 and action == 0:
+			action = random.choice([-1,1])
+
+		state, reward, done, ts = env.step(action)
+
 		if render:
 			env.render()
 		policy.rewards.append(reward)
