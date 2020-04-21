@@ -158,3 +158,52 @@ class DoubleQLearning:
 			return 1
 		else:
 			return 0
+
+class SemiSARSA:
+	"""
+	Semi-Gradient SARSA
+	"""
+	def __init__(self, policy_type, model, max_steps):
+		self.policy_type = policy_type
+		self.model = model
+		self.max_steps = max_steps
+
+	def get_actions(self, states, get_probs=False, game_time_step=None, shape=None):
+		q_val = np.array([ self.model.get_qVal(self._one_hot(states,a,shape)) for a in range(shape[-1]) ])
+		actions = self.policy_type(q_val)[0]
+		action_mapped = self._mapFromIndexToTrueActions(actions)
+		if game_time_step == self.max_steps and action_mapped == 0 :
+			return random.choice([-1,1]) 
+
+		else:
+			return action_mapped
+
+	def _mapFromIndexToTrueActions(self, actions):
+		if actions == 1:
+			return -1 
+		elif actions == 2:
+			return 1
+		else:
+			return 0
+
+	def _mapFromTrueActionsToIndex(self, actions):
+		if actions == -1:
+			return 1 
+		elif actions == 1:
+			return 2
+		else:
+			return 0 
+
+	def _augState(self, stateVal, height):
+		"""
+		Eg. Augment state value so that [-15,15] goes to [0,30] 
+		"""
+		return stateVal + height
+
+	def _one_hot(self, state, action, shape):
+		Nt, ht, height, A = shape
+		one = np.eye(Nt)[self._augState(state[0],self.max_steps)]
+		two = np.eye(ht)[self._augState(state[1],self.max_steps)]
+		three = np.eye(height)[state[2]]
+		four = np.eye(A)[self._mapFromTrueActionsToIndex(action)]
+		return np.hstack((one,two,three,four))
