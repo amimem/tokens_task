@@ -16,7 +16,7 @@ from torch.distributions import Categorical
 
 gamma = 1
 seed = 5
-lr= 1e-2
+lr= 0.5
 render = False
 log_interval = 1
 
@@ -51,6 +51,8 @@ class Policy(nn.Module):
 
 
 policy = Policy()
+# optimizer = optim.SGD(params=policy.parameters(), lr=lr)
+# optimizer = optim.RMSprop(policy.parameters(), lr=lr)
 optimizer = optim.Adam(policy.parameters(), lr=lr)
 eps = np.finfo(np.float32).eps.item()
 
@@ -120,5 +122,5 @@ for i_episode in count(1):
 
 	finish_episode()
 	if i_episode % log_interval == 0:
-		print('Episode {}\tLast reward: {:.2f}\tAverage reward: {:.2f}\Avg Correct: {:.2f}'.format(
+		print('Episode {}\tLast reward: {:.2f}\tAverage reward: {:.2f}\tAvg Correct: {:.2f}'.format(
 				i_episode, ep_reward, np.mean(returns), num_correct/i_episode))
