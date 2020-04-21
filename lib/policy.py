@@ -1,5 +1,7 @@
 import numpy as np
 from scipy.special import softmax
+import torch
+import torch.nn as nn
 
 class Policy:
 	"""
@@ -149,3 +151,19 @@ class TemperatureTracker():
 	def set_tmp(self, frame):
 		tmp = self.tmp_start - frame/float(self.num_frames)
 		self.policy.temperature =  max(tmp, self.tmp_final)
+
+
+class PolicyNetwork(nn.Module):
+  def __init__(self, in_dim, h_dim, out_dim):
+    super(PolicyNetwork, self).__init__()
+    self.linear_1 = nn.Linear(in_dim, h_dim, bias=True)
+    self.relu_1 = nn.ReLU()
+    self.linear_2 = nn.Linear(h_dim, out_dim, bias=True)
+    self.softmax = nn.Softmax(dim=1)
+
+  def forward(self, input):
+    o_1 = self.linear_1(input)
+    o_2 = self.relu_1(o_1)
+    o_3 = self.linear_2(o_2)
+    o_4 = self.softmax(o_3)
+    return o_4
