@@ -22,7 +22,7 @@ class TokensEnv(gym.Env):
 		self.num_actions = 3
 		# forward or backward in each dimension
 		self.action_space = spaces.Discrete(3)
-		self.observation_space = spaces.Box(low=np.array([-terminal+1, -terminal+1]), high=np.array([terminal+1, terminal+1]), dtype=np.int64)
+		self.observation_space = spaces.Box(low=np.array([-terminal+1, -terminal+1, 0]), high=np.array([terminal+1, terminal+1, terminal]), dtype=np.int64)
 		
 		# initial condition
 		self.state = np.zeros(3) #index 0: Nt, index 1: ht, index 2: time_step
