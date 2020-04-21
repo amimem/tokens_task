@@ -25,7 +25,7 @@ class TokensEnv(gym.Env):
 		self.observation_space = spaces.Box(low=np.array([-terminal+1, -terminal+1]), high=np.array([terminal+1, terminal+1]), dtype=np.int64)
 		
 		# initial condition
-		self.state = np.zeros(2) #index 0: Nt, index 1: ht
+		self.state = np.zeros(3) #index 0: Nt, index 1: ht, index 2: time_step
 		self.gamma = gamma
 		self.reset()
 		self.terminal = terminal
@@ -94,7 +94,7 @@ class TokensEnv(gym.Env):
 			self.time_steps += 1
 
 		next_state[2] = self.time_steps
-		return next_state, reward, is_done, self.time_steps, 
+		return next_state, reward, is_done, self.time_steps
 
 	
 		
@@ -141,7 +141,7 @@ class TokensEnv(gym.Env):
 		This function computes the total number of states
 		: return (int) : total number of states
 		'''
-		return len(range(-self.terminal,self.terminal+1))*len(range(-self.terminal,self.terminal+1)) #-15 to 15 inclusive for Nt and -15 to 15 inclusive for ht
+		return len(range(-self.terminal,self.terminal+1))*len(range(-self.terminal,self.terminal+1)*len(range(self.terminal+1))) #-15 to 15 inclusive for Nt and -15 to 15 inclusive for ht, 0 to 15 inclusive for time_steps
 
 	def get_num_actions(self):
 		'''
