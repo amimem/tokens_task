@@ -7,3 +7,4 @@ import collections
 def seed(seed):
     random.seed(seed)
     numpy.random.seed(seed)
+    torch.manual_seed(seed)
