@@ -2,6 +2,11 @@ import gym
 import gym_tokens
 import argparse
 import random
+import torch
+import torch.nn as nn
+import torch.optim as optim
+from  torch.distributions import Categorical
+import scipy.signal as signal
 
 import time
 import datetime
@@ -48,6 +53,14 @@ def _mapFromTrueActionsToIndex(actions):
 	else:
 		return 0 
 
+def _mapFromIndexToTrueActions(actions):
+	if actions == 1:
+		return -1 
+	elif actions == 2:
+		return 1
+	else:
+		return 0
+
 
 def main():
 
@@ -58,7 +71,7 @@ def main():
 	parser.add_argument("--model", default=None, help="name of the model (default: {ENV}_{ALGO}_{TIME})")
 	parser.add_argument("--seed", type=int, default=7, help="random seed (default: 7)")
 	parser.add_argument("--log_interval", type=int, default=1, help="number of updates between two logs (default: 1)")
-	parser.add_argument("--algo", default='sarsa', help="algorithm to use: sarsa | q-learning | e-sarsa | double-q | semi-sarsa")
+	parser.add_argument("--algo", default='sarsa', help="algorithm to use: sarsa | q-learning | e-sarsa | double-q | semi-sarsa | reinforce")
 	parser.add_argument("--convg", type=float, default=0.00001, help="convergence value")
 	parser.add_argument("--lr", type=float, default=0.1, help="learning rate")
 	parser.add_argument("--lr_final", type=float, default=0.0001, help="learning rate")
@@ -213,8 +226,126 @@ def main():
 	numRecentCorrectChoice = []
 
 	lr = args.lr
+	h_dim_p = 128
+	input_shape = 3
 
-	if args.algo == 'semi-sarsa':
+	if args.algo == 'reinforce':
+
+		last = 0
+		policy_network = lib.PolicyNetwork(input_shape, h_dim_p , num_actions)
+		optimizer = optim.Adam(policy_network.parameters(), lr=0.001)
+
+		for n in range(args.games): # for each episode
+
+			# these lists are used to store trajectory data
+			state_trajectory = []
+			action_trajectory = []
+			reward_trajectory = []
+			log_prob_trajectory = []
+
+			s, _ = env.reset() # reset the environment to get the initial state
+			state_trajectory.append(s) # add it to the trajectory
+
+			done = False
+
+			while not done:
+
+				# choose an action based on the policy (source: https://pytorch.org/docs/stable/distributions.html)
+				p = policy_network(torch.from_numpy(s).unsqueeze(0).type(torch.FloatTensor))
+				m = Categorical(p)
+				a = m.sample()
+
+				# add action and its log probablity to their corresponding lists
+				action_trajectory.append(a.item())
+				log_prob_trajectory.append(m.log_prob(a))
+
+				# take the action
+				s_prime, reward, done, _ = env.step(_mapFromIndexToTrueActions(a.item()))
+
+				# add s' and r to their corresponding lists
+				state_trajectory.append(s_prime)
+				reward_trajectory.append(reward)
+
+				# change the state
+				s = s_prime
+
+			num_games+=1
+			decision_step = _augState(abs(s[1]), args.height) # taking abs means that decision step is always between 15 and 31
+			decisionTime[decision_step-1] += 1 # after each episode is done, one is added to the corresponding element in decision time,
+			# so after 100 episodes, we have a histogram of decision times
+
+			if abs(s[1]) == args.height+1: # if we made no decision till the end
+				last += 1 # last choice represents the number of episodes in which we waited until the end
+
+			choice_made.append(_sign(s[1])) # these arays are updated after each episode, not after each timestep
+			correct_choice.append(_sign(s[0]))
+			if (_sign(s[1]) == _sign(s[0])):
+				numCorrectChoice += 1
+			finalDecisionTime.append(abs(s[1])) # Why next_state? because it is the latest state that we have and we don't update state until after the if-else condition
+			finalRewardPerGame.append(reward)
+
+			# compute returns and save them in an array (source: https://stackoverflow.com/questions/47970683/vectorize-a-numpy-discount-calculation)
+			a = [1, -args.gamma]
+			b = [1]
+			returns = signal.lfilter(b, a, x=reward_trajectory[::-1])[::-1]
+
+			# turn the array into a tensor
+			returns_tensor = torch.tensor(np.array(returns))
+
+			loss = [] # a list to store loss
+
+			# compute the loss for each log probability ( alpha * gamma^t * G_t * Grad(ln(pi))) )
+			# alpha is the learning rate specificed in the optimizer
+			for i in range(len(log_prob_trajectory)):
+				loss.append(-(args.gamma**i)*log_prob_trajectory[i]*returns_tensor[i])
+
+			# elements of loss are tensors, turn the list into one tensor
+			# use the fact that grad of sum = sum of grads
+			loss = torch.cat(loss, dim=0)
+			loss = loss.sum()
+
+			# clear gradients, perform backward prropagation
+			optimizer.zero_grad()
+			loss.backward()
+			optimizer.step()
+
+			if num_games > num_games_prevs and num_games % args.log_interval == 0: # if the game has not stpped and we moved an episode forward
+
+				duration = int(time.time() - start_time)
+				totalLoss_val = np.sum(lossPerEpisode) # sum of all episodic losses
+				totalReturn_val = np.sum(totalReturns) # sum of all episodic returns
+
+				avg_loss = np.mean(lossPerEpisode[-1000:])
+				avg_returns = np.mean(totalReturns[-1000:])
+				recent_correct = np.mean(numRecentCorrectChoice[-1000:])
+
+				header = ["Games", "duration"]
+				data = [num_games, duration] # update and num_frames are +=15 ed
+
+				header += ["lr", "last"]
+				data += [lr, last]
+
+				header += ["Returns", "Avg Returns", "Correct Percentage", "Recent Correct", "decision_time"]
+				data += [totalReturn_val.item(), avg_returns.item(), numCorrectChoice/num_games, recent_correct, finalDecisionTime[num_games_prevs]]
+
+				txt_logger.info(
+					"G {} | D {} | LR {:.5f} | Last {} | R {:.3f} | Avg R {:.3f} | Avg C {:.3f} | Rec C {:.3f} | DT {}"
+					.format(*data))
+
+				# csv_header = ["trajectory", "choice_made", "correct_choice", "decision_time", "reward_received"]
+				# csv_data = [traj_group[num_games_prevs], choice_made[num_games_prevs], correct_choice[num_games_prevs], finalDecisionTime[num_games_prevs], finalRewardPerGame[num_games_prevs]]
+
+				# if num_games == 1:
+				# 	csv_logger.writerow(csv_header)
+				# csv_logger.writerow(csv_data)
+				# csv_file.flush()
+
+				num_games_prevs = num_games
+
+			
+
+
+	elif args.algo == 'semi-sarsa':
 
 
 		while num_games <= args.games:
