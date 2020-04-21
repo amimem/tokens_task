@@ -141,7 +141,7 @@ class TokensEnv(gym.Env):
 		This function computes the total number of states
 		: return (int) : total number of states
 		'''
-		return len(range(-self.terminal,self.terminal+1))*len(range(-self.terminal,self.terminal+1)*len(range(self.terminal+1))) #-15 to 15 inclusive for Nt and -15 to 15 inclusive for ht, 0 to 15 inclusive for time_steps
+		return len(range(-self.terminal,self.terminal+1))*len(range(-self.terminal,self.terminal+1))*len(range(self.terminal+1)) #-15 to 15 inclusive for Nt and -15 to 15 inclusive for ht, 0 to 15 inclusive for time_steps
 
 	def get_num_actions(self):
 		'''
