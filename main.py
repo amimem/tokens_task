@@ -16,8 +16,6 @@ import lib
 
 import numpy as np
 
-
-
 num_actions = 3
 
 def _sign(num):
@@ -31,37 +29,6 @@ def _sign(num):
 	else:
 		return 0
 
-def one_hot(state, action, shape):
-	Nt, ht, height, A = shape
-	one = np.eye(Nt)[_augState(state[0],height)]
-	two = np.eye(ht)[_augState(state[1],height)]
-	three = np.eye(height)[state[2]]
-	four = np.eye(A)[_mapFromTrueActionsToIndex(action)]
-	return np.hstack((one,two,three,four))
-
-def _augState(stateVal, height):
-	"""
-	Eg. Augment state value so that [-15,15] goes to [0,30] 
-	"""
-	return stateVal + height
-
-def _mapFromTrueActionsToIndex(actions):
-	if actions == -1:
-		return 1 
-	elif actions == 1:
-		return 2
-	else:
-		return 0 
-
-def _mapFromIndexToTrueActions(actions):
-	if actions == 1:
-		return -1 
-	elif actions == 2:
-		return 1
-	else:
-		return 0
-
-
 def main():
 
 	parser = argparse.ArgumentParser()
@@ -71,7 +38,7 @@ def main():
 	parser.add_argument("--model", default=None, help="name of the model (default: {ENV}_{ALGO}_{TIME})")
 	parser.add_argument("--seed", type=int, default=7, help="random seed (default: 7)")
 	parser.add_argument("--log_interval", type=int, default=1, help="number of updates between two logs (default: 1)")
-	parser.add_argument("--algo", default='sarsa', help="algorithm to use: sarsa | q-learning | e-sarsa | double-q | semi-sarsa | reinforce")
+	parser.add_argument("--algo", default='sarsa', help="algorithm to use: sarsa | q-learning | e-sarsa | double-q")
 	parser.add_argument("--convg", type=float, default=0.00001, help="convergence value")
 	parser.add_argument("--lr", type=float, default=0.1, help="learning rate")
 	parser.add_argument("--lr_final", type=float, default=0.0001, help="learning rate")
@@ -136,20 +103,18 @@ def main():
 	num_actions = env.get_num_actions()
 	total_run_time_steps = args.height * args.games # Total time-steps
 
-	numNT = (args.height * 2) + 1  # -14 to 16
-	numHT = (args.height * 2) + 1 # -14 to 16
+	numNT = (args.height * 2) + 1  # -15 to 15
+	numHT = (args.height * 2) + 1 # -15 to 15
 
 	dimension = numNT+1 + numHT+1 + args.height+1 + num_actions
 	shape = (numNT+1, numHT+1, args.height+1, num_actions)
 
 	# model = lib.Q_Table(env.get_num_states(), env.get_num_actions(), (numNT, numHT), args.convg)
-	if args.algo == 'semi-sarsa':
-		model = lib.Weight(dimension, args.convg, args.height, shape)
-	elif args.algo == 'double-q':
-		model = lib.Q_Table(numNT*numHT*(args.height+2), num_actions, (numNT, numHT, args.height), args.convg, args.height) 
-		model2 = lib.Q_Table(numNT*numHT*(args.height+2), num_actions, (numNT, numHT, args.height), args.convg, args.height)
+	if args.algo == 'double-q':
+		model = lib.Q_Table(numNT*numHT*(args.height+1), num_actions, (numNT, numHT, args.height), args.convg, args.height) 
+		model2 = lib.Q_Table(numNT*numHT*(args.height+1), num_actions, (numNT, numHT, args.height), args.convg, args.height)
 	else:
-		model = lib.Q_Table(numNT*numHT*(args.height+2), num_actions, (numNT, numHT, args.height), args.convg, args.height) 
+		model = lib.Q_Table(numNT*numHT*(args.height+1), num_actions, (numNT, numHT, args.height), args.convg, args.height) 
 
 	#NOTE why the number of states is the way it is ? num_states x (height + 2)
 
@@ -188,9 +153,6 @@ def main():
 	elif args.algo == 'double-q':
 		monkeyAgent = lib.DoubleQLearning(policy, model, model2, args.height)
 
-	elif args.algo == 'semi-sarsa':
-		monkeyAgent = lib.SemiSARSA(policy, model, args.height)
-
 	lr_sched = lib.LRscheduler(args.lr, args.lr_final, total_run_time_steps) 
 	#NOTE is there is reason that lr is not decreased to the final value during the experiment?
 
@@ -225,384 +187,147 @@ def main():
 	numCorrectChoice = 0
 	numRecentCorrectChoice = []
 
-	lr = args.lr
-	h_dim_p = 128
-	input_shape = 3
+	while num_frames <= total_run_time_steps: 
 
-	if args.algo == 'reinforce':
+		traj.append(state[0].tolist())
 
-		last = 0
-		policy_network = lib.PolicyNetwork(input_shape, h_dim_p , num_actions)
-		optimizer = optim.Adam(policy_network.parameters(), lr=0.001)
+		if args.softmax:
+			if args.fancy_tmp:
+				tmp_track.set_tmp(num_games)
+			else:
+				tmp_track.set_tmp(num_frames)
+			# decrease temperature from game to game
+			#NOTE change per episode or per time_step?
 
-		for n in range(args.games): # for each episode
+		elif args.eps_soft:
+			#NOTE change per episode or per time_step?
+			if args.fancy_eps:
+				eps_track.set_eps(num_games) # decrease epsilon from game to game
+			else:
+				eps_track.set_eps(num_frames)
 
-			# these lists are used to store trajectory data
-			state_trajectory = []
-			action_trajectory = []
-			reward_trajectory = []
-			log_prob_trajectory = []
+		elif args.fancy_eps:
+			eps_track.set_eps(num_games) # epsilon in fancy eps is changed from game to game
 
-			s, _ = env.reset() # reset the environment to get the initial state
-			state_trajectory.append(s) # add it to the trajectory
+		else:
+			eps_track.set_eps(num_frames) # otherwise it is changes timestep to timestep
 
-			done = False
+		action = monkeyAgent.get_actions(state, False, game_time_step)
 
-			while not done:
+		next_state, reward, is_done, game_time_step = env.step(action)
 
-				# choose an action based on the policy (source: https://pytorch.org/docs/stable/distributions.html)
-				p = policy_network(torch.from_numpy(s).unsqueeze(0).type(torch.FloatTensor))
-				m = Categorical(p)
-				a = m.sample()
+		lr = lr_sched.get_lr(num_frames) # learning rate is changed from timestep to timestep
+		
+		if args.algo == 'sarsa':
+			next_act = monkeyAgent.get_actions(next_state, False, game_time_step)
+			loss = model.get_TDerror(state, action, next_state, next_act, reward, args.gamma, is_done, args.algo)
+			converged = model.update_qVal(lr, state, action, loss)
+		elif args.algo == 'e-sarsa':
+			next_act, probs = monkeyAgent.get_actions(next_state, True, game_time_step)
+			loss = model.get_TDerror(state, action, next_state, probs, reward, args.gamma, is_done, args.algo)
+			converged = model.update_qVal(lr, state, action, loss)
+		else:
+			next_act = None
+			if args.algo == 'double-q':
+				if np.random.binomial(1,0.5):
+					loss = model.get_TDerror(state, action, next_state, next_act, reward, args.gamma, is_done, args.algo, model2)
+					converged = model.update_qVal(lr, state, action, loss)
+				else:
+					loss2 = model2.get_TDerror(state, action, next_state, next_act, reward, args.gamma, is_done, args.algo, model)
+					converged = model2.update_qVal(lr, state, action, loss2)
+			else: # for q-learning
+				loss = model.get_TDerror(state, action, next_state, next_act, reward, args.gamma, is_done, args.algo)
+				converged = model.update_qVal(lr, state, action, loss)
 
-				# add action and its log probablity to their corresponding lists
-				action_trajectory.append(a.item())
-				log_prob_trajectory.append(m.log_prob(a))
+		totalLoss.append(loss) # loss trajectory
 
-				# take the action
-				s_prime, reward, done, _ = env.step(_mapFromIndexToTrueActions(a.item()))
-
-				# add s' and r to their corresponding lists
-				state_trajectory.append(s_prime)
-				reward_trajectory.append(reward)
-
-				# change the state
-				s = s_prime
-
+		if is_done:
 			num_games+=1
-			decision_step = _augState(abs(s[1]), args.height) # taking abs means that decision step is always between 15 and 31
+			totalReturns.append(reward) # reward per episode
+
+			if reward > 0:
+				numCorrectChoice += 1
+				numRecentCorrectChoice.append(1)
+			else:
+				numRecentCorrectChoice.append(0) # binary value, correct choice or not per episode
+
+			lossPerEpisode.append(np.sum(totalLoss))
+			totalLoss = []
+
+			decision_step = model._augState(abs(next_state[1])) # taking abs means that decision step is always between 15 and 31
 			decisionTime[decision_step-1] += 1 # after each episode is done, one is added to the corresponding element in decision time,
 			# so after 100 episodes, we have a histogram of decision times
 
-			if abs(s[1]) == args.height+1: # if we made no decision till the end
-				last += 1 # last choice represents the number of episodes in which we waited until the end
+			if abs(next_state[1]) == args.height+1: # if we made no decision till the end
+				last_choice += 1 # last choice represents the number of episodes in which we waited until the end
 
-			choice_made.append(_sign(s[1])) # these arays are updated after each episode, not after each timestep
-			correct_choice.append(_sign(s[0]))
-			if (_sign(s[1]) == _sign(s[0])):
-				numCorrectChoice += 1
-			finalDecisionTime.append(abs(s[1])) # Why next_state? because it is the latest state that we have and we don't update state until after the if-else condition
+			choice_made.append(_sign(next_state[1])) # these arays are updated after each episode, not after each timestep
+			correct_choice.append(_sign(next_state[0]))
+			finalDecisionTime.append(abs(next_state[1])) # Why next_state? because it is the latest state that we have and we don't update state until after the if-else condition
 			finalRewardPerGame.append(reward)
 
-			# compute returns and save them in an array (source: https://stackoverflow.com/questions/47970683/vectorize-a-numpy-discount-calculation)
-			a = [1, -args.gamma]
-			b = [1]
-			returns = signal.lfilter(b, a, x=reward_trajectory[::-1])[::-1]
+			traj_group.append(traj) # the list of all trajectories over all episodes
+			traj = []
+			next_state, game_time_step = env.reset()
 
-			# turn the array into a tensor
-			returns_tensor = torch.tensor(np.array(returns))
+		else:
+			num_frames+=1 
+			update+= 1
 
-			loss = [] # a list to store loss
-
-			# compute the loss for each log probability ( alpha * gamma^t * G_t * Grad(ln(pi))) )
-			# alpha is the learning rate specificed in the optimizer
-			for i in range(len(log_prob_trajectory)):
-				loss.append(-(args.gamma**i)*log_prob_trajectory[i]*returns_tensor[i])
-
-			# elements of loss are tensors, turn the list into one tensor
-			# use the fact that grad of sum = sum of grads
-			loss = torch.cat(loss, dim=0)
-			loss = loss.sum()
-
-			# clear gradients, perform backward prropagation
-			optimizer.zero_grad()
-			loss.backward()
-			optimizer.step()
-
-			if num_games > num_games_prevs and num_games % args.log_interval == 0: # if the game has not stpped and we moved an episode forward
-
-				duration = int(time.time() - start_time)
-				totalLoss_val = np.sum(lossPerEpisode) # sum of all episodic losses
-				totalReturn_val = np.sum(totalReturns) # sum of all episodic returns
-
-				avg_loss = np.mean(lossPerEpisode[-1000:])
-				avg_returns = np.mean(totalReturns[-1000:])
-				recent_correct = np.mean(numRecentCorrectChoice[-1000:])
-
-				header = ["Games", "duration"]
-				data = [num_games, duration] # update and num_frames are +=15 ed
-
-				header += ["lr", "last"]
-				data += [lr, last]
-
-				header += ["Returns", "Avg Returns", "Correct Percentage", "Recent Correct", "decision_time"]
-				data += [totalReturn_val.item(), avg_returns.item(), numCorrectChoice/num_games, recent_correct, finalDecisionTime[num_games_prevs]]
-
-				txt_logger.info(
-					"G {} | D {} | LR {:.5f} | Last {} | R {:.3f} | Avg R {:.3f} | Avg C {:.3f} | Rec C {:.3f} | DT {}"
-					.format(*data))
-
-				# csv_header = ["trajectory", "choice_made", "correct_choice", "decision_time", "reward_received"]
-				# csv_data = [traj_group[num_games_prevs], choice_made[num_games_prevs], correct_choice[num_games_prevs], finalDecisionTime[num_games_prevs], finalRewardPerGame[num_games_prevs]]
-
-				# if num_games == 1:
-				# 	csv_logger.writerow(csv_header)
-				# csv_logger.writerow(csv_data)
-				# csv_file.flush()
-
-				num_games_prevs = num_games
-
-			
+		state = next_state
 
 
-	elif args.algo == 'semi-sarsa':
+		if num_games > num_games_prevs and num_games % args.log_interval == 0: # if the game has not stpped and we moved an episode forward
+			duration = int(time.time() - start_time)
+			totalLoss_val = np.sum(lossPerEpisode) # sum of all episodic losses
+			totalReturn_val = np.sum(totalReturns) # sum of all episodic returns
 
+			avg_loss = np.mean(lossPerEpisode[-1000:])
+			avg_returns = np.mean(totalReturns[-1000:])
+			recent_correct = np.mean(numRecentCorrectChoice[-1000:])
 
-		while num_games <= args.games:
-
-			state, game_time_step = env.reset()
-			action = monkeyAgent.get_actions(state, False, game_time_step, shape)
-
-			traj.append(state[0].tolist())
-
-			while 1:
-
-				next_state, reward, is_done, game_time_step = env.step(action)
-
-				# lr_sched.get_lr(num_frames) # learning rate is changed from timestep to timestep
-
-				next_act = monkeyAgent.get_actions(next_state, False, game_time_step, shape)
-				loss = model.get_error(state, action, next_state, next_act, reward, args.gamma, is_done)
-				converged = model.update_weight(lr, loss)
-
-				totalLoss.append(loss) # loss trajectory
-
-				if is_done:
-					num_games+=1
-					totalReturns.append(reward) # reward per episode
-
-					if reward > 0:
-						numCorrectChoice += 1
-						numRecentCorrectChoice.append(1)
-					else:
-						numRecentCorrectChoice.append(0) # binary value, correct choice or not per episode
-
-					lossPerEpisode.append(np.sum(totalLoss))
-					totalLoss = []
-
-					decision_step = _augState(abs(next_state[1]), args.height) # taking abs means that decision step is always between 15 and 31
-					decisionTime[decision_step-1] += 1 # after each episode is done, one is added to the corresponding element in decision time,
-					# so after 100 episodes, we have a histogram of decision times
-
-					if abs(next_state[1]) == args.height+1: # if we made no decision till the end
-						last_choice += 1 # last choice represents the number of episodes in which we waited until the end
-
-					choice_made.append(_sign(next_state[1])) # these arays are updated after each episode, not after each timestep
-					correct_choice.append(_sign(next_state[0]))
-					finalDecisionTime.append(abs(next_state[1])) # Why next_state? because it is the latest state that we have and we don't update state until after the if-else condition
-					finalRewardPerGame.append(reward)
-
-					traj_group.append(traj) # the list of all trajectories over all episodes
-					traj = []
-					break
-
-				else:
-					num_frames+=1 
-					update+= 1
-
-				state = next_state
-				action = next_act
-
-
-			if num_games > num_games_prevs and num_games % args.log_interval == 0: # if the game has not stpped and we moved an episode forward
-				duration = int(time.time() - start_time)
-				totalLoss_val = np.sum(lossPerEpisode) # sum of all episodic losses
-				totalReturn_val = np.sum(totalReturns) # sum of all episodic returns
-
-				avg_loss = np.mean(lossPerEpisode[-1000:])
-				avg_returns = np.mean(totalReturns[-1000:])
-				recent_correct = np.mean(numRecentCorrectChoice[-1000:])
-
-				header = ["update", "frames", "Games", "duration"]
-				data = [update, num_frames, num_games, duration] # update and num_frames are +=15 ed
-
-				if args.softmax:
-					header += ["tmp", "lr", "last"]
-					data += [policy.temperature, lr, last_choice]
-				else:
-					header += ["eps", "lr", "last"]
-					data += [policy.epsilon, lr, last_choice]
-
-				header += ["Returns", "Avg Returns", "Correct Percentage", "Recent Correct", "decision_time"]
-				data += [totalReturn_val.item(), avg_returns.item(), numCorrectChoice/num_games, recent_correct, finalDecisionTime[num_games_prevs]]
-
-				if args.softmax:
-					txt_logger.info(
-						"U {} | F {} | G {} | D {} | TMP {:.5f} | LR {:.5f} | Last {} | R {:.3f} | Avg R {:.3f} | Avg C {:.3f} | Rec C {:.3f} | DT {}"
-						.format(*data))
-				else:
-					txt_logger.info(
-						"U {} | F {} | G {} | D {} | EPS {:.5f} | LR {:.5f} | Last {} | R {:.3f} | Avg R {:.3f} | Avg C {:.3f} | Rec C {:.3f} | DT {}"
-						.format(*data))
-
-				csv_header = ["trajectory", "choice_made", "correct_choice", "decision_time", "reward_received"]
-				csv_data = [traj_group[num_games_prevs], choice_made[num_games_prevs], correct_choice[num_games_prevs], finalDecisionTime[num_games_prevs], finalRewardPerGame[num_games_prevs]]
-
-				if num_games == 1:
-					csv_logger.writerow(csv_header)
-				csv_logger.writerow(csv_data)
-				csv_file.flush()
-
-				num_games_prevs = num_games
-
-			# Save status
-			if args.save_interval > 0 and num_games % args.save_interval == 0:
-				model.save_w(model_dir, num_games)
-				np.save(model_dir+'/decisionTime_'+str(num_games)+'.npy', decisionTime)
-	
-
-	else:
-
-		while num_frames <= total_run_time_steps: 
-
-			traj.append(state[0].tolist())
+			header = ["update", "frames", "Games", "duration"]
+			data = [update, num_frames, num_games, duration] # update and num_frames are +=15 ed
 
 			if args.softmax:
-				if args.fancy_tmp:
-					tmp_track.set_tmp(num_games)
-				else:
-					tmp_track.set_tmp(num_frames)
-				# decrease temperature from game to game
-				#NOTE change per episode or per time_step?
-
-			elif args.eps_soft:
-				#NOTE change per episode or per time_step?
-				if args.fancy_eps:
-					eps_track.set_eps(num_games) # decrease epsilon from game to game
-				else:
-					eps_track.set_eps(num_frames)
-
-			elif args.fancy_eps:
-				eps_track.set_eps(num_games) # epsilon in fancy eps is changed from game to game
-
+				header += ["tmp", "lr", "last"]
+				data += [policy.temperature, lr, last_choice]
 			else:
-				eps_track.set_eps(num_frames) # otherwise it is changes timestep to timestep
+				header += ["eps", "lr", "last"]
+				data += [policy.epsilon, lr, last_choice]
 
-			action = monkeyAgent.get_actions(state, False, game_time_step)
+			header += ["Loss", "Returns", "Avg Loss", "Avg Returns", "Correct Percentage", "Recent Correct", "decision_time"]
+			data += [totalLoss_val.item(), totalReturn_val.item(), avg_loss.item(), avg_returns.item(), numCorrectChoice/num_games, recent_correct, finalDecisionTime[num_games_prevs]]
 
-			next_state, reward, is_done, game_time_step = env.step(action)
-
-			# print('next_state: ', next_state)
-			# print('action: ', action)
-			# print('is done: ', is_done)
-			# print('game_time_step: ', game_time_step)
-			# print('state: ', state)
-
-			lr = lr_sched.get_lr(num_frames) # learning rate is changed from timestep to timestep
-			
-			if args.algo == 'sarsa':
-				next_act = monkeyAgent.get_actions(next_state, False, game_time_step)
-				loss = model.get_TDerror(state, action, next_state, next_act, reward, args.gamma, is_done, args.algo)
-				converged = model.update_qVal(lr, state, action, loss)
-			elif args.algo == 'e-sarsa':
-				next_act, probs = monkeyAgent.get_actions(next_state, True, game_time_step)
-				loss = model.get_TDerror(state, action, next_state, probs, reward, args.gamma, is_done, args.algo)
-				converged = model.update_qVal(lr, state, action, loss)
+			if args.softmax:
+				txt_logger.info(
+					"U {} | F {} | G {} | D {} | TMP {:.5f} | LR {:.5f} | Last {} | L {:.3f} | R {:.3f} | Avg L {:.3f} | Avg R {:.3f} | Avg C {:.3f} | Rec C {:.3f} | DT {}"
+					.format(*data))
 			else:
-				next_act = None
-				if args.algo == 'double-q':
-					if np.random.binomial(1,0.5):
-						loss = model.get_TDerror(state, action, next_state, next_act, reward, args.gamma, is_done, args.algo, model2)
-						converged = model.update_qVal(lr, state, action, loss)
-					else:
-						loss2 = model2.get_TDerror(state, action, next_state, next_act, reward, args.gamma, is_done, args.algo, model)
-						converged = model2.update_qVal(lr, state, action, loss2)
-				else: # for q-learning
-					loss = model.get_TDerror(state, action, next_state, next_act, reward, args.gamma, is_done, args.algo)
-					converged = model.update_qVal(lr, state, action, loss)
+				txt_logger.info(
+					"U {} | F {} | G {} | D {} | EPS {:.5f} | LR {:.5f} | Last {} | L {:.3f} | R {:.3f} | Avg L {:.3f} | Avg R {:.3f} | Avg C {:.3f} | Rec C {:.3f} | DT {}"
+					.format(*data))
 
-			totalLoss.append(loss) # loss trajectory
+			# header += ["Loss", "Returns", "Avg Loss", "Avg Returns"]
+			# data += [totalLoss_val, totalReturn_val, avg_loss, avg_returns]
 
-			if is_done:
-				num_games+=1
-				totalReturns.append(reward) # reward per episode
+			csv_header = ["trajectory", "choice_made", "correct_choice", "decision_time", "reward_received"]
+			csv_data = [traj_group[num_games_prevs], choice_made[num_games_prevs], correct_choice[num_games_prevs], finalDecisionTime[num_games_prevs], finalRewardPerGame[num_games_prevs]]
 
-				if reward > 0:
-					numCorrectChoice += 1
-					numRecentCorrectChoice.append(1)
-				else:
-					numRecentCorrectChoice.append(0) # binary value, correct choice or not per episode
+			if num_games == 1:
+				csv_logger.writerow(csv_header)
+			csv_logger.writerow(csv_data)
+			csv_file.flush()
 
-				lossPerEpisode.append(np.sum(totalLoss))
-				totalLoss = []
+			num_games_prevs = num_games
 
-				decision_step = model._augState(abs(next_state[1])) # taking abs means that decision step is always between 15 and 31
-				decisionTime[decision_step-1] += 1 # after each episode is done, one is added to the corresponding element in decision time,
-				# so after 100 episodes, we have a histogram of decision times
-
-				if abs(next_state[1]) == args.height+1: # if we made no decision till the end
-					last_choice += 1 # last choice represents the number of episodes in which we waited until the end
-
-				choice_made.append(_sign(next_state[1])) # these arays are updated after each episode, not after each timestep
-				correct_choice.append(_sign(next_state[0]))
-				finalDecisionTime.append(abs(next_state[1])) # Why next_state? because it is the latest state that we have and we don't update state until after the if-else condition
-				finalRewardPerGame.append(reward)
-
-				traj_group.append(traj) # the list of all trajectories over all episodes
-				traj = []
-				next_state, game_time_step = env.reset()
-
-			else:
-				num_frames+=1 
-				update+= 1
-
-			state = next_state
-
-
-			if num_games > num_games_prevs and num_games % args.log_interval == 0: # if the game has not stpped and we moved an episode forward
-				duration = int(time.time() - start_time)
-				totalLoss_val = np.sum(lossPerEpisode) # sum of all episodic losses
-				totalReturn_val = np.sum(totalReturns) # sum of all episodic returns
-
-				avg_loss = np.mean(lossPerEpisode[-1000:])
-				avg_returns = np.mean(totalReturns[-1000:])
-				recent_correct = np.mean(numRecentCorrectChoice[-1000:])
-
-				header = ["update", "frames", "Games", "duration"]
-				data = [update, num_frames, num_games, duration] # update and num_frames are +=15 ed
-
-				if args.softmax:
-					header += ["tmp", "lr", "last"]
-					data += [policy.temperature, lr, last_choice]
-				else:
-					header += ["eps", "lr", "last"]
-					data += [policy.epsilon, lr, last_choice]
-
-				header += ["Loss", "Returns", "Avg Loss", "Avg Returns", "Correct Percentage", "Recent Correct", "decision_time"]
-				data += [totalLoss_val.item(), totalReturn_val.item(), avg_loss.item(), avg_returns.item(), numCorrectChoice/num_games, recent_correct, finalDecisionTime[num_games_prevs]]
-
-				if args.softmax:
-					txt_logger.info(
-						"U {} | F {} | G {} | D {} | TMP {:.5f} | LR {:.5f} | Last {} | L {:.3f} | R {:.3f} | Avg L {:.3f} | Avg R {:.3f} | Avg C {:.3f} | Rec C {:.3f} | DT {}"
-						.format(*data))
-				else:
-					txt_logger.info(
-						"U {} | F {} | G {} | D {} | EPS {:.5f} | LR {:.5f} | Last {} | L {:.3f} | R {:.3f} | Avg L {:.3f} | Avg R {:.3f} | Avg C {:.3f} | Rec C {:.3f} | DT {}"
-						.format(*data))
-
-				# header += ["Loss", "Returns", "Avg Loss", "Avg Returns"]
-				# data += [totalLoss_val, totalReturn_val, avg_loss, avg_returns]
-
-				csv_header = ["trajectory", "choice_made", "correct_choice", "decision_time", "reward_received"]
-				csv_data = [traj_group[num_games_prevs], choice_made[num_games_prevs], correct_choice[num_games_prevs], finalDecisionTime[num_games_prevs], finalRewardPerGame[num_games_prevs]]
-
-				# print(traj_group[num_games_prevs])
-				# print(choice_made[num_games_prevs])
-
-				if num_games == 1:
-					csv_logger.writerow(csv_header)
-				csv_logger.writerow(csv_data)
-				csv_file.flush()
-
-				num_games_prevs = num_games
-
-			# Save status
-			if args.save_interval > 0 and num_games % args.save_interval == 0:
-				# status = {"num_frames": num_frames, "update": update, "games": num_games, "totalReturns" : totalReturns}
-				model.save_q_state(model_dir, num_games)
-				np.save(model_dir+'/decisionTime_'+str(num_games)+'.npy', decisionTime)
-				# txt_logger.info("Status saved")
-				# utils.save_status(status, model_dir)
+		# Save status
+		if args.save_interval > 0 and num_games % args.save_interval == 0:
+			# status = {"num_frames": num_frames, "update": update, "games": num_games, "totalReturns" : totalReturns}
+			model.save_q_state(model_dir, num_games)
+			np.save(model_dir+'/decisionTime_'+str(num_games)+'.npy', decisionTime)
+			# txt_logger.info("Status saved")
+			# utils.save_status(status, model_dir)
 
 if __name__ == '__main__':
 	main()
