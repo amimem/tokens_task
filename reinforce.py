@@ -120,5 +120,5 @@ for i_episode in count(1):
 
 	finish_episode()
 	if i_episode % log_interval == 0:
-		print('Episode {}\tLast reward: {:.2f}\tAverage reward: {:.2f}\tNum Correct: {:.2f}'.format(
+		print('Episode {}\tLast reward: {:.2f}\tAverage reward: {:.2f}\Avg Correct: {:.2f}'.format(
 				i_episode, ep_reward, np.mean(returns), num_correct/i_episode))
