@@ -1,7 +1,0 @@
-README.md
-setup.py
-gym_tokens.egg-info/PKG-INFO
-gym_tokens.egg-info/SOURCES.txt
-gym_tokens.egg-info/dependency_links.txt
-gym_tokens.egg-info/requires.txt
-gym_tokens.egg-info/top_level.txt
