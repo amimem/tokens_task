@@ -248,10 +248,8 @@ class TokensEnv2(gym.Env):
 			reward = 0
 			self.time_steps += 1
 
-		return next_state, reward, is_done, self.time_steps, 
+		return next_state, reward, is_done, self.time_steps
 
-	
-		
 
 	def _fancy_discount_reward(self, reward, inter_trial_interval = 7.5):
 		'''
@@ -308,7 +306,7 @@ class TokensEnv2(gym.Env):
 		'''
 		This function resets the environment by setting the states, time_steps to zero
 		'''
-		self.state = np.zeros(3, dtype=np.int64)
+		self.state = np.zeros(2, dtype=np.int64)
 		self.done = False
 		self.time_steps = 0
 
