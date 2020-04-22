@@ -94,21 +94,16 @@ def reinforce2():
 	txt_logger.info("Training status loaded\n")
 
 	num_actions = env.get_num_actions()
-	total_run_time_steps = args.height * args.games # Total time-steps
 
 
 	num_episode = status["num_episode"]
 	prev_num_episode = 0
 
 	start_time = time.time()
-	epsisode_returns = [] # Return per episode
 	episode_loss_trajectory = [] # loss trajectory
 
-	state, game_time_step  = env.reset()
 	episodes_decison_times = []
 	episodes_loss = []
-
-	last_choice = 0
 
 	episodes_decison_times = np.zeros(shape=((args.height*2)+1)) # histogram of decision times per episode
 	#NOTE why first 15 elements are always empty
@@ -150,6 +145,9 @@ def reinforce2():
 			p = policy_network(torch.from_numpy(s).unsqueeze(0).type(torch.FloatTensor))
 			m = Categorical(p)
 			a = m.sample()
+
+			# if s[2] == 15 and a == 0:
+			# 	a = torch.from_numpy(np.array(random.choice([-1,1])))
 
 			# add action and its log probablity to their corresponding lists
 			action_trajectory.append(a.item())
@@ -242,7 +240,6 @@ def reinforce2():
 			csv_file.flush()
 
 			prev_num_episode = num_episode
-
 
 if __name__ == "__main__":
 	reinforce2()
