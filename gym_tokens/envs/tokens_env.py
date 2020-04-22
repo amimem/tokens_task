@@ -240,7 +240,7 @@ class TokensEnv2(gym.Env):
 
 		else:
 
-			next_state = np.zeros(3,dtype=np.int64)
+			next_state = np.zeros(2,dtype=np.int64)
 			next_state[0] = Nt
 			next_state[1] = ht
 			self.state = next_state
