@@ -34,12 +34,14 @@ def _mapFromIndexToTrueActions(actions):
 	else:
 		return 0
 
+in_dim = env.observation_space.shape[0]
+out_dim = env.action_space.n
 class Policy(nn.Module):
 	def __init__(self):
 		super(Policy, self).__init__()
-		self.affine1 = nn.Linear(3, 16)
+		self.affine1 = nn.Linear(in_dim, 16)
 		self.dropout = nn.Dropout(p=0.6)
-		self.affine2 = nn.Linear(16, 3)
+		self.affine2 = nn.Linear(16, out_dim)
 
 		self.saved_log_probs = []
 		self.rewards = []

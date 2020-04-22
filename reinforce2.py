@@ -87,7 +87,7 @@ def reinforce():
 	else:
 		block_discount = 0.75
 
-	env = gym.make('tokens-v0', gamma=block_discount, seed=args.seed, terminal=args.height, fancy_discount=args.fancy_discount)
+	env = gym.make('tokens-v1', gamma=block_discount, seed=args.seed, terminal=args.height, fancy_discount=args.fancy_discount)
 	txt_logger.info("Environments loaded\n")
 
 	status = {"num_episode":0}
@@ -106,7 +106,7 @@ def reinforce():
 
 	state, game_time_step  = env.reset()
 	episodes_decison_times = []
-	episdoe_loss = []
+	episodes_loss = []
 
 	last_choice = 0
 
@@ -209,11 +209,11 @@ def reinforce():
 		if num_episode > prev_num_episode and num_episode % args.log_interval == 0: # if the game has not stpped and we moved an episode forward
 
 			duration = int(time.time() - start_time)
-			episode_total_loss = np.sum(episdoe_loss) # sum of all episodic losses
-			totalReturn_val = np.sum(epsisode_returns) # sum of all episodic returns
+			episode_total_loss = np.sum(episodes_loss) # sum of all episodic losses
+			totalReturn_val = np.sum(episode_returns) # sum of all episodic returns
 
-			avg_loss = np.mean(episdoe_loss[-1000:])
-			avg_returns = np.mean(epsisode_returns[-1000:])
+			avg_loss = np.mean(episodes_loss[-1000:])
+			avg_returns = np.mean(episode_returns[-1000:])
 			recent_correct = np.mean(numRecentCorrectChoice[-1000:])
 
 			header = ["Games", "duration"]

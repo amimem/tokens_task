@@ -106,9 +106,6 @@ def main():
 	numNT = (args.height * 2) + 1  # -15 to 15
 	numHT = (args.height * 2) + 1 # -15 to 15
 
-	dimension = numNT+1 + numHT+1 + args.height+1 + num_actions
-	shape = (numNT+1, numHT+1, args.height+1, num_actions)
-
 	# model = lib.Q_Table(env.get_num_states(), env.get_num_actions(), (numNT, numHT), args.convg)
 	if args.algo == 'double-q':
 		model = lib.Q_Table(numNT*numHT*(args.height+1), num_actions, (numNT, numHT, args.height), args.convg, args.height) 
