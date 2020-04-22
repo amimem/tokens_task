@@ -43,12 +43,20 @@ class Q_Table:
 
 		ids = []
 
-		num_rows, num_cols, timestep = self.shape
+		if len(self.shape == 3):
+			num_rows, num_cols, timestep = self.shape
 
-		Nt = self._augState(states[0])
-		ht = self._augState(states[1])
-		temp_id = Nt * num_cols + ht
-		temp_id_time = temp_id*(timestep+1) + states[2]
+			Nt = self._augState(states[0])
+			ht = self._augState(states[1])
+			temp_id = Nt * num_cols + ht
+			temp_id_time = temp_id*(timestep+1) + states[2]
+		else:
+			num_rows, num_cols = self.shape
+			Nt = self._augState(states[0])
+			ht = self._augState(states[1])
+			temp_id = Nt * num_cols + ht
+			temp_id_time = temp_id
+			
 		return temp_id_time
 
 	def get_TDerror(self, states, actions, next_states, next_actions, reward, gamma, is_done, algo, model2 = None):

@@ -107,11 +107,19 @@ def main():
 	numHT = (args.height * 2) + 1 # -15 to 15
 
 	# model = lib.Q_Table(env.get_num_states(), env.get_num_actions(), (numNT, numHT), args.convg)
-	if args.algo == 'double-q':
-		model = lib.Q_Table(numNT*numHT*(args.height+1), num_actions, (numNT, numHT, args.height), args.convg, args.height) 
-		model2 = lib.Q_Table(numNT*numHT*(args.height+1), num_actions, (numNT, numHT, args.height), args.convg, args.height)
+	if env.observation_space.shape[0] == 3:
+		if args.algo == 'double-q':
+			model = lib.Q_Table(numNT*numHT*(args.height+1), num_actions, (numNT, numHT, args.height), args.convg, args.height) 
+			model2 = lib.Q_Table(numNT*numHT*(args.height+1), num_actions, (numNT, numHT, args.height), args.convg, args.height)
+		else:
+			model = lib.Q_Table(numNT*numHT*(args.height+1), num_actions, (numNT, numHT, args.height), args.convg, args.height) 
 	else:
-		model = lib.Q_Table(numNT*numHT*(args.height+1), num_actions, (numNT, numHT, args.height), args.convg, args.height) 
+		if args.algo == 'double-q':
+			model = lib.Q_Table(numNT*numHT, num_actions, (numNT, numHT), args.convg, args.height) 
+			model2 = lib.Q_Table(numNT*numHT, num_actions, (numNT, numHT), args.convg, args.height)
+		else:
+			model = lib.Q_Table(numNT*numHT, num_actions, (numNT, numHT), args.convg, args.height) 
+
 
 	#NOTE why the number of states is the way it is ? num_states x (height + 2)
 
