@@ -194,26 +194,34 @@ class SemiSARSA:
 	def _one_hot(self, state, action, shape):
 
 		if len(shape) == 4:
-			Nt, ht, z, A = shape
+			x, y, z, A = shape
 
-			x = np.zeros((Nt+ht+z)*A)
+			o = np.zeros(x*y*z*A)
 
-			one = np.eye(Nt)[self._augState(state[0],self.max_steps)]
-			two = np.eye(ht)[self._augState(state[1],self.max_steps)]
-			three = np.eye(z)[state[2]]
+			one = self._augState(state[0], self.max_steps)
+			two = self._augState(state[1], self.max_steps)
+			three = state[2]
+
+			index = (one * y + two)*z + three
+			one_hot = np.zeros(x*y*z)
+			one_hot[index] = 1
 
 			a = self._mapFromTrueActionsToIndex(action)
-			x[(Nt+ht+z)*a:(Nt+ht+z)*(a+1)] = np.hstack((one,two,three))
+			o[(x*y*z)*a:(x*y*z)*(a+1)] = one_hot
 
 		else:
-			Nt, ht, A = shape
+			x, y, A = shape
 
-			x = np.zeros((Nt+ht)*A)
+			o = np.zeros(x*y*A)
 
-			one = np.eye(Nt)[self._augState(state[0],self.max_steps)]
-			two = np.eye(ht)[self._augState(state[1],self.max_steps)]
+			one = self._augState(state[0], self.max_steps)
+			two = self._augState(state[1], self.max_steps)
 
+			index = (one * y + two)
+			one_hot = np.zeros(x*y)
+			one_hot[index] = 1
+			
 			a = self._mapFromTrueActionsToIndex(action)
-			x[(Nt+ht)*a:(Nt+ht)*(a+1)] = np.hstack((one,two))
+			o[(x*y)*a:(x*y)*(a+1)] = one_hot
 
-		return x
+		return o
