@@ -44,16 +44,30 @@ class Weight:
 		np.save(file+'/w_'+str(timestep), self.w)
 
 	def _one_hot(self, state, action, shape):
-		Nt, ht, z, A = shape
 
-		x = np.zeros((Nt+ht+z)*A)
+		if len(shape) == 4:
+			Nt, ht, z, A = shape
 
-		one = np.eye(Nt)[self._augState(state[0], self.height)]
-		two = np.eye(ht)[self._augState(state[1], self.height)]
-		three = np.eye(z)[state[2]]
+			x = np.zeros((Nt+ht+z)*A)
 
-		a = self._mapFromTrueActionsToIndex(action)
-		x[(Nt+ht+z)*a:(Nt+ht+z)*(a+1)] = np.hstack((one,two,three))
+			one = np.eye(Nt)[self._augState(state[0],self.height)]
+			two = np.eye(ht)[self._augState(state[1],self.height)]
+			three = np.eye(z)[state[2]]
+
+			a = self._mapFromTrueActionsToIndex(action)
+			x[(Nt+ht+z)*a:(Nt+ht+z)*(a+1)] = np.hstack((one,two,three))
+
+		else:
+			Nt, ht, A = shape
+
+			x = np.zeros((Nt+ht)*A)
+
+			one = np.eye(Nt)[self._augState(state[0],self.height)]
+			two = np.eye(ht)[self._augState(state[1],self.height)]
+
+			a = self._mapFromTrueActionsToIndex(action)
+			x[(Nt+ht)*a:(Nt+ht)*(a+1)] = np.hstack((one,two))
+
 		return x
 		
 

@@ -27,35 +27,11 @@ def _sign(num):
 	else:
 		return 0
 
-def _one_hot(state, action, shape):
-	Nt, ht, height, A = shape
-	one = np.eye(Nt)[_augState(state[0],height)]
-	two = np.eye(ht)[_augState(state[1],height)]
-	three = np.eye(height)[state[2]]
-	four = np.eye(A)[_mapFromTrueActionsToIndex(action)]
-	return np.hstack((one,two,three,four))
-
 def _augState(stateVal, height):
 	"""
 	Eg. Augment state value so that [-15,15] goes to [0,30] 
 	"""
 	return stateVal + height
-
-def _mapFromTrueActionsToIndex(actions):
-	if actions == -1:
-		return 1 
-	elif actions == 1:
-		return 2
-	else:
-		return 0 
-
-def _mapFromIndexToTrueActions(actions):
-	if actions == 1:
-		return -1 
-	elif actions == 2:
-		return 1
-	else:
-		return 0
 
 
 def semiSARSA():
@@ -124,13 +100,16 @@ def semiSARSA():
 
 	num_states = env.get_num_states()
 	num_actions = env.get_num_actions()
-	total_run_time_steps = args.height * args.games # Total time-steps
 
 	numNT = (args.height * 2) + 1  # -15 to 15
 	numHT = (args.height * 2) + 1 # -15 to 15
 
-	dimension = (numNT + numHT + args.height+1) * num_actions
-	shape = (numNT, numHT, args.height+1, num_actions)
+	if env.observation_space.shape[0] == 3:
+		dimension = (numNT + numHT + args.height+1) * num_actions
+		shape = (numNT, numHT, args.height+1, num_actions)
+	else:
+		dimension = (numNT + numHT) * num_actions
+		shape = (numNT, numHT, num_actions)
 
 	model = lib.Weight(dimension, args.convg, args.height, shape)
 
@@ -152,7 +131,7 @@ def semiSARSA():
 
 	monkeyAgent = lib.SemiSARSA(policy, model, args.height)
 
-	lr_sched = lib.LRscheduler(args.lr, args.lr_final, total_run_time_steps) 
+	lr_sched = lib.LRscheduler(args.lr, args.lr_final, args.games) 
 	#NOTE is there is reason that lr is not decreased to the final value during the experiment?
 
 	num_frames = status["num_frames"]
