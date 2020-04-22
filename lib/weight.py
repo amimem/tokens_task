@@ -3,7 +3,6 @@ import numpy as np
 class Weight:
 	def __init__(self, dimension, converge_val, height, shape): 
 		self.w = np.zeros(dimension)
-		self.dimension = dimension
 		self.converge_val = converge_val
 		self.height = height
 		self.shape = shape
@@ -30,13 +29,13 @@ class Weight:
 			return False
 
 	def get_error(self, state, action, next_state, next_action , reward, gamma, is_done, model2 = None):
-		state_action_rep = self._one_hot(state, state[1], self.shape)
+		state_action_rep = self._one_hot(state, action, self.shape)
 		current_qVal = self.get_qVal(state_action_rep)
 
 		if is_done:
 			next_qVal = 0
 		else:
-			next_state_action_rep = self._one_hot(next_state, next_state[1], self.shape)
+			next_state_action_rep = self._one_hot(next_state, next_action, self.shape)
 			next_qVal = self.get_qVal(next_state_action_rep)
 
 		return (reward + (gamma*next_qVal) - current_qVal)*state_action_rep
@@ -47,37 +46,29 @@ class Weight:
 	def _one_hot(self, state, action, shape):
 
 		if len(shape) == 4:
-			x, y, z, A = shape
+			Nt, ht, z, A = shape
 
-			o = np.zeros(self.dimension)
+			x = np.zeros((Nt+ht+z)*A)
 
-			one = self._augState(state[0], self.height)
-			two = self._augState(state[1], self.height)
-			three = state[2]
-
-			index = (one * y + two)*z + three
-			one_hot = np.zeros(x*y*z)
-			one_hot[index] = 1
+			one = np.eye(Nt)[self._augState(state[0],self.height)]
+			two = np.eye(ht)[self._augState(state[1],self.height)]
+			three = np.eye(z)[state[2]]
 
 			a = self._mapFromTrueActionsToIndex(action)
-			o[(x*y*z)*a:(x*y*z)*(a+1)] = one_hot
+			x[(Nt+ht+z)*a:(Nt+ht+z)*(a+1)] = np.hstack((one,two,three))
 
 		else:
-			x, y, A = shape
+			Nt, ht, A = shape
 
-			o = np.zeros(self.dimension)
+			x = np.zeros((Nt+ht)*A)
 
-			one = self._augState(state[0], self.height)
-			two = self._augState(state[1], self.height)
+			one = np.eye(Nt)[self._augState(state[0],self.height)]
+			two = np.eye(ht)[self._augState(state[1],self.height)]
 
-			index = (one * y + two)
-			one_hot = np.zeros(x*y)
-			one_hot[index] = 1
-			
 			a = self._mapFromTrueActionsToIndex(action)
-			o[(x*y)*a:(x*y)*(a+1)] = one_hot
+			x[(Nt+ht)*a:(Nt+ht)*(a+1)] = np.hstack((one,two))
 
-		return o
+		return x
 		
 
 	def _augState(self, stateVal, height):

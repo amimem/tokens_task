@@ -105,10 +105,10 @@ def semiSARSA():
 	numHT = (args.height * 2) + 1 # -15 to 15
 
 	if env.observation_space.shape[0] == 3:
-		dimension = (numNT * numHT * (args.height+1)) * num_actions
+		dimension = (numNT + numHT + args.height+1) * num_actions
 		shape = (numNT, numHT, args.height+1, num_actions)
 	else:
-		dimension = (numNT * numHT) * num_actions
+		dimension = (numNT + numHT) * num_actions
 		shape = (numNT, numHT, num_actions)
 
 	model = lib.Weight(dimension, args.convg, args.height, shape)
@@ -165,7 +165,7 @@ def semiSARSA():
 	lr = 0.003
 	#TODO One-Hot vector
 	#NOTE update for action = state[1], did not work
-	#NOTE all actions are same, did not work
+	#TODO all actions are same
 
 	while num_games <= args.games:
 
