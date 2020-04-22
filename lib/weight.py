@@ -35,7 +35,7 @@ class Weight:
 		if is_done:
 			next_qVal = 0
 		else:
-			next_state_action_rep = self._one_hot(next_state,next_action, self.shape)
+			next_state_action_rep = self._one_hot(next_state, next_action, self.shape)
 			next_qVal = self.get_qVal(next_state_action_rep)
 
 		return (reward + (gamma*next_qVal) - current_qVal)*state_action_rep
@@ -44,12 +44,18 @@ class Weight:
 		np.save(file+'/w_'+str(timestep), self.w)
 
 	def _one_hot(self, state, action, shape):
-		Nt, ht, height, A = shape
-		one = np.eye(Nt)[self._augState(state[0],height)]
-		two = np.eye(ht)[self._augState(state[1],height)]
-		three = np.eye(height)[state[2]]
-		four = np.eye(A)[self._mapFromTrueActionsToIndex(action)]
-		return np.hstack((one,two,three,four))
+		Nt, ht, z, A = shape
+
+		x = np.zeros((Nt+ht+z)*A)
+
+		one = np.eye(Nt)[self._augState(state[0], self.height)]
+		two = np.eye(ht)[self._augState(state[1], self.height)]
+		three = np.eye(z)[state[2]]
+
+		a = self._mapFromTrueActionsToIndex(action)
+		x[(Nt+ht+z)*a:(Nt+ht+z)*(a+1)] = np.hstack((one,two,three))
+		return x
+		
 
 	def _augState(self, stateVal, height):
 		"""

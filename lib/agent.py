@@ -23,7 +23,6 @@ class BaseAgent:
 		
 		raise NotImplementedError
 
-	
 class SarsaAgent:
 	"""
 	Sarsa is an on-policy agent which updates the Q-values using latest experience
@@ -80,8 +79,6 @@ class QlAgent:
 			return 1
 		else:
 			return 0
-
-
 class ExpectedSARSA:
 	"""
 	Expected SARSA
@@ -115,13 +112,7 @@ class ExpectedSARSA:
 		elif actions == 2:
 			return 1
 		else:
-			return 0
-
-	
-
-
-
-		
+			return 0		
 
 class DoubleQLearning:
 	"""
@@ -201,9 +192,14 @@ class SemiSARSA:
 		return stateVal + height
 
 	def _one_hot(self, state, action, shape):
-		Nt, ht, height, A = shape
+		Nt, ht, z, A = shape
+
+		x = np.zeros((Nt+ht+z)*A)
+
 		one = np.eye(Nt)[self._augState(state[0],self.max_steps)]
 		two = np.eye(ht)[self._augState(state[1],self.max_steps)]
-		three = np.eye(height)[state[2]]
-		four = np.eye(A)[self._mapFromTrueActionsToIndex(action)]
-		return np.hstack((one,two,three,four))
+		three = np.eye(z)[state[2]]
+
+		a = self._mapFromTrueActionsToIndex(action)
+		x[(Nt+ht+z)*a:(Nt+ht+z)*(a+1)] = np.hstack((one,two,three))
+		return x

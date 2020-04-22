@@ -27,7 +27,7 @@ def _sign(num):
 	else:
 		return 0
 
-def one_hot(state, action, shape):
+def _one_hot(state, action, shape):
 	Nt, ht, height, A = shape
 	one = np.eye(Nt)[_augState(state[0],height)]
 	two = np.eye(ht)[_augState(state[1],height)]
@@ -129,11 +129,9 @@ def semiSARSA():
 	numNT = (args.height * 2) + 1  # -15 to 15
 	numHT = (args.height * 2) + 1 # -15 to 15
 
-	dimension = numNT+1 + numHT+1 + args.height+1 + num_actions
-	shape = (numNT+1, numHT+1, args.height+1, num_actions)
-	#FIXME change dimension, state for each action and concat
+	dimension = (numNT + numHT + args.height+1) * num_actions
+	shape = (numNT, numHT, args.height+1, num_actions)
 
-	# model = lib.Q_Table(env.get_num_states(), env.get_num_actions(), (numNT, numHT), args.convg)
 	model = lib.Weight(dimension, args.convg, args.height, shape)
 
 	if args.softmax:
@@ -188,12 +186,12 @@ def semiSARSA():
 	numCorrectChoice = 0
 	numRecentCorrectChoice = []
 
-	lr = args.lr
-
+	lr = 0.003
 
 	while num_games <= args.games:
 
 		state, game_time_step = env.reset()
+
 		action = monkeyAgent.get_actions(state, False, game_time_step, shape)
 
 		traj.append(state[0].tolist())
@@ -201,10 +199,10 @@ def semiSARSA():
 		while 1:
 
 			next_state, reward, is_done, game_time_step = env.step(action)
-
-			# lr_sched.get_lr(num_frames) # learning rate is changed from timestep to timestep
-
-			next_act = monkeyAgent.get_actions(next_state, False, game_time_step, shape)
+			if not is_done:
+				next_act = monkeyAgent.get_actions(next_state, False, game_time_step, shape)
+			else:
+				next_act = None
 			loss = model.get_error(state, action, next_state, next_act, reward, args.gamma, is_done)
 			converged = model.update_weight(lr, loss)
 
