@@ -42,7 +42,7 @@ def _augState(stateVal, height):
 	"""
 	return stateVal + height
 
-def reinforce():
+def reinforce2():
 
 	parser = argparse.ArgumentParser()
 
@@ -169,6 +169,7 @@ def reinforce():
 		run_trajectories.append(state_trajectory)
 		decision_step = _augState(abs(s[1]), args.height) # taking abs means that decision step is always between 15 and 31
 		episodes_decison_times[decision_step-1] += 1 # after each episode is done, one is added to the corresponding element in decision time,
+		#FIXME check the index
 		# so after 100 episodes, we have a histogram of decision times
 
 		if abs(s[1]) == args.height+1: # if we made no decision till the end
@@ -176,15 +177,18 @@ def reinforce():
 
 		episode_choice.append(_sign(s[1])) # these arays are updated after each episode, not after each timestep
 		correct_choice.append(_sign(s[0]))
-		if (_sign(s[1]) == _sign(s[0])):
-			numCorrectChoice += 1
 		final_episode_decison_time.append(abs(s[1])) # Why next_state? because it is the latest state that we have and we don't update state until after the if-else condition
+		if reward > 0:
+			numCorrectChoice += 1
+			numRecentCorrectChoice.append(1)
+		else:
+			numRecentCorrectChoice.append(0) # binary value, correct choice or not per episode
 		episode_returns.append(reward)
 
 		# compute returns and save them in an array (source: https://stackoverflow.com/questions/47970683/vectorize-a-numpy-discount-calculation)
-		a = [1, -args.gamma]
+		c = [1, -args.gamma]
 		b = [1]
-		returns = signal.lfilter(b, a, x=reward_trajectory[::-1])[::-1]
+		returns = signal.lfilter(b, c, x=reward_trajectory[::-1])[::-1]
 
 		# turn the array into a tensor
 		returns_tensor = torch.tensor(np.array(returns))
@@ -222,7 +226,7 @@ def reinforce():
 			header += ["lr", "last"]
 			data += [lr, last]
 
-			header += ["Loss", "Returns", "Avg Loss", "Avg Returns", "Correct Percentage", "Recent Correct", "decision_time"]
+			header += ["Returns", "Avg Returns", "Correct Percentage", "Recent Correct", "decision_time"]
 			data += [totalReturn_val.item(), avg_returns.item(), numCorrectChoice/num_episode, recent_correct, final_episode_decison_time[prev_num_episode]]
 
 			txt_logger.info(
@@ -241,4 +245,4 @@ def reinforce():
 
 
 if __name__ == "__main__":
-	reinforce()
+	reinforce2()
