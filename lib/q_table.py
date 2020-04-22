@@ -43,7 +43,7 @@ class Q_Table:
 
 		ids = []
 
-		if len(self.shape == 3):
+		if len(self.shape) == 3:
 			num_rows, num_cols, timestep = self.shape
 
 			Nt = self._augState(states[0])

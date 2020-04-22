@@ -131,9 +131,6 @@ def semiSARSA():
 
 	monkeyAgent = lib.SemiSARSA(policy, model, args.height)
 
-	lr_sched = lib.LRscheduler(args.lr, args.lr_final, args.games) 
-	#NOTE is there is reason that lr is not decreased to the final value during the experiment?
-
 	num_frames = status["num_frames"]
 	update = status["update"]
 	num_games = status["num_games"]
@@ -166,6 +163,9 @@ def semiSARSA():
 	numRecentCorrectChoice = []
 
 	lr = 0.003
+	#TODO One-Hot vector
+	#NOTE update for action = state[1], did not work
+	#TODO all actions are same
 
 	while num_games <= args.games:
 
