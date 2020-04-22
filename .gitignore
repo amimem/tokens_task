@@ -6,3 +6,4 @@ __pycache__
 *.kate-swp
 *.egg
 *.pyc
+*.egg-info/
