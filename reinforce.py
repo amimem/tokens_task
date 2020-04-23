@@ -66,14 +66,30 @@ optimizer = optim.Adam(policy.parameters(), lr=0.001)
 eps = np.finfo(np.float32).eps.item()
 
 
-def select_action(state):
+def select_action(state, time_step):
 	state = torch.from_numpy(state).float().unsqueeze(0)
 	probs = policy(state)
 	m = Categorical(probs)
 	action = m.sample()
+	s = state.numpy()
+	# if action == 0 and time_step == 15 and s[0,1] == 0:
+	# 	return random.choice([-1,1])
+	# else:	
 	policy.saved_log_probs.append(m.log_prob(action))
-	return action.item()
+	return _mapFromIndexToTrueActions(action.item())
 
+	"""NOTE if we do a random choice, the length of the list of log prob = the length of rewards - 1
+	Therefore, the reward, be it 1 or -1 or 0, would not have any effect on the weights.
+	So if we waited until the end and took no action before, policy remains unchanged ! 
+	Now is it dangerous? Nope, because it is not reinforced, and there will be a trajectory in which taking the right action will reinforce good behaviour.
+	Cases in which the agent receives a reward if no random action is chosen:
+		sign(0 = coordinate), sign(0 == action)
+	Cases in which the agent receives a reward if a random action is chosen:
+	sign(0 = coordinate), sign(0 == action)
+	sign(+ = coordinate), sign(1 == action)
+	sign(- = coordinate), sign(-1 == action)
+	so choosing a random action is more rewarding in general !
+	"""
 
 def finish_episode():
 	R = 0
@@ -119,10 +135,10 @@ for i_episode in range(1,10001):
 	state, ts = env.reset()
 	ep_reward = 0
 	done = False
+
+	time_step = 0
 	while not done:  # Don't infinite loop while learning
-	
-		action = select_action(state)
-		action = _mapFromIndexToTrueActions(action)
+		action = select_action(state, time_step)
 
 		#FIXME Actions are chosen even if they cause no effect on state.
 		#their log prob is used to adjust the weight
@@ -131,6 +147,7 @@ for i_episode in range(1,10001):
 		# 	action = random.choice([-1,1])
 
 		state, reward, done, ts = env.step(action)
+		time_step += 1
 
 		if render:
 			env.render()
