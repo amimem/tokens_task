@@ -84,7 +84,10 @@ class TokensEnv(gym.Env):
 
 			#fancy discounting reward is applied if initialised when the environment is constructed
 			if self.fancy_discount:
-				reward = self._fancy_discount_reward(reward)
+				if ht == 0:
+					reward = 0
+				else:
+					reward = self._fancy_discount_reward(reward)
 
 		else:
 
@@ -241,7 +244,10 @@ class TokensEnv2(gym.Env):
 
 			#fancy discounting reward is applied if initialised when the environment is constructed
 			if self.fancy_discount:
-				reward = self._fancy_discount_reward(reward)
+				if ht == 0:
+					reward = 0
+				else:
+					reward = self._fancy_discount_reward(reward)
 
 		else:
 
