@@ -4,7 +4,6 @@ class Q_Table:
 
 	def __init__(self, num_states, num_actions, shape, converge_val, height): 
 		self.shape = shape
-		# self.prev_q_matrix = np.zeros((num_states, num_actions))
 		self.q_matrix = np.ones((num_states, num_actions))*0.5
 		self.converge_val = converge_val
 		self.height = height
