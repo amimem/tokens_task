@@ -87,7 +87,7 @@ def reinforce2():
 	else:
 		block_discount = 0.75
 
-	env = gym.make('tokens-v1', gamma=block_discount, seed=args.seed, terminal=args.height, fancy_discount=args.fancy_discount)
+	env = gym.make('tokens-v1', gamma=block_discount, seed=args.seed, terminal=args.height, fancy_discount=args.fancy_discount, v='horizon')
 	txt_logger.info("Environments loaded\n")
 
 	status = {"num_episode":0}

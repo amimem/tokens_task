@@ -24,7 +24,7 @@ log_interval = 1
 
 utils.seed(seed)
 
-env = gym.make('tokens-v1', gamma=0.75, seed=seed, terminal=15, fancy_discount=False)
+env = gym.make('tokens-v1', gamma=0.75, seed=seed, terminal=15, fancy_discount=False, v='horizon')
 env.seed(seed)
 random.seed(seed)
 torch.manual_seed(seed)
