@@ -59,11 +59,12 @@ class TokensEnv(gym.Env):
 		#Go left if prob is less than 0.5, go right otherwise if in-game time-steps less than max time-step
 		if self.time_steps < self.terminal:
 
+			Nt = Nt_prev
 			if np.random.uniform() <= 0.5:
-				Nt = Nt_prev - 1
+				Nt -= 1
 
 			else:
-				Nt = Nt_prev + 1
+				Nt += 1
 
 		#When max time-step is reached, ensure that the final state observed (Nt) is the same as the previous
 		else:
