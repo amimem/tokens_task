@@ -45,15 +45,21 @@ class TokensEnv(gym.Env):
 		if action >1 or action <-1:
 			raise Exception('action should belong to this set: [-1,0,1]')
 
-		coinToss = np.random.uniform()
 		Nt_prev = self.state[0]
 		ht_prev = self.state[1]
 		is_done = False
 
+		#Play action if all previous actions are waiting (action = 0). Else, preserve previous played actions
+		if ht_prev == 0:
+			ht = ht_prev + (self.time_steps+1) * action
+
+		else:
+			ht = ht_prev
+
 		#Go left if prob is less than 0.5, go right otherwise if in-game time-steps less than max time-step
 		if self.time_steps < self.terminal:
 
-			if coinToss <= 0.5:
+			if np.random.uniform() <= 0.5:
 				Nt = Nt_prev - 1
 
 			else:
@@ -62,13 +68,6 @@ class TokensEnv(gym.Env):
 		#When max time-step is reached, ensure that the final state observed (Nt) is the same as the previous
 		else:
 			Nt = Nt_prev
-
-		#Play action if all previous actions are waiting (action = 0). Else, preserve previous played actions
-		if ht_prev == 0:
-			ht = ht_prev + (self.time_steps+1) * action
-
-		else:
-			ht = ht_prev
 
 
 		#If in-game time has reached max time step, assign a reward value if the correct side (based on sign) is chosen.
