@@ -192,7 +192,7 @@ def main():
 	numCorrectChoice = 0
 	numRecentCorrectChoice = []
 
-	while num_frames <= total_run_time_steps: 
+	while num_games <= args.games: 
 
 		traj.append(state[0].tolist())
 
