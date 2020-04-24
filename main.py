@@ -192,6 +192,8 @@ def main():
 	numCorrectChoice = 0
 	numRecentCorrectChoice = []
 
+	took_action = False
+
 	while num_games <= args.games: 
 
 		traj.append(state[0].tolist())
@@ -217,9 +219,22 @@ def main():
 		else:
 			eps_track.set_eps(num_frames) # otherwise it is changes timestep to timestep
 
-		action = monkeyAgent.get_actions(state, False, game_time_step)
 
-		next_state, reward, is_done, game_time_step = env.step(action)
+		if env.v == 'horizon':
+			if not took_action:
+				action = monkeyAgent.get_actions(state, False, game_time_step)
+				next_state, reward, is_done, game_time_step = env.step(action)
+				if action:
+					took_action = True
+			else:
+				action = monkeyAgent.get_actions(state, False, game_time_step, True)
+				next_state, reward, is_done, game_time_step = env.step(action)
+
+		else: # if not in the horizon setting
+				action = monkeyAgent.get_actions(state, False, game_time_step)
+				next_state, reward, is_done, game_time_step = env.step(action)
+
+
 
 		lr = lr_sched.get_lr(num_frames) # learning rate is changed from timestep to timestep
 		
@@ -274,7 +289,7 @@ def main():
 			traj_group.append(traj) # the list of all trajectories over all episodes
 			traj = []
 			next_state, game_time_step = env.reset()
-
+			took_action = False
 		else:
 			num_frames+=1 
 			update+= 1
