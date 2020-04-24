@@ -56,51 +56,67 @@ class TokensEnv(gym.Env):
 		else:
 			ht = ht_prev
 
-		#Go left if prob is less than 0.5, go right otherwise if in-game time-steps less than max time-step
-		if self.time_steps < self.terminal:
-
-			Nt = Nt_prev
-			if np.random.uniform() <= 0.5:
-				Nt -= 1
-
-			else:
-				Nt += 1
-
-		#When max time-step is reached, ensure that the final state observed (Nt) is the same as the previous
-		else:
-			Nt = Nt_prev
-
-
 		#If in-game time has reached max time step, assign a reward value if the correct side (based on sign) is chosen.
-		if self.time_steps == self.terminal:
-			if ht == 0:
-				reward = 0
-			else:
-				reward = self._indicator(self._sign(Nt),self._sign(ht))
-			next_state = np.zeros(3,dtype=np.int64)
-			next_state[0] = Nt
-			next_state[1] = ht
+
+		Nt = Nt_prev
+		next_state = np.zeros(3,dtype=np.int64)
+		dec_time = self.time_steps
+
+		if ht:
+			
+			next_state[0] = Nt # set n before
+
+			while self.time_steps < self.terminal:
+
+				if np.random.uniform() <= 0.5:
+					Nt -= 1
+				else:
+					Nt += 1
+
+				self.time_steps += 1
+
 			is_done = True
 
-			#fancy discounting reward is applied if initialised when the environment is constructed
+			# Nt was set before
+			next_state[1] = ht
+
 			if self.fancy_discount:
-				if ht == 0:
-					reward = 0
-				else:
-					reward = self._fancy_discount_reward(reward)
+				reward = self._indicator(self._sign(Nt),self._sign(ht))
+				reward = self._fancy_discount_reward(reward)
+			else:
+				reward = self._indicator(self._sign(Nt),self._sign(ht))
+
+			next_state[2] = dec_time
+			self.state = next_state
+			return next_state, reward, is_done, self.time_steps
 
 		else:
 
-			next_state = np.zeros(3,dtype=np.int64)
-			next_state[0] = Nt
+			if self.time_steps < self.terminal:
+				if np.random.uniform() <= 0.5:
+					Nt -= 1
+				else:
+					Nt += 1
+
+				self.time_steps += 1
+				is_done = False
+			else:
+				is_done = True
+
+			next_state[0] = Nt # set n after
 			next_state[1] = ht
-			self.state = next_state
-
 			reward = 0
-			self.time_steps += 1
+			next_state[2] = self.time_steps
+			self.state = next_state
+			return next_state, reward, is_done, self.time_steps
 
-		next_state[2] = self.time_steps
-		return next_state, reward, is_done, self.time_steps
+			"""
+			Here is what happens if step:
+			if the action is taken, only ht , time_step is changed, reward is calculated and the new state is returned.
+			This makes sense since for the Q table the state (N,0,t) and non zero action A leads to a good return.
+			So the agent is motivated to take this action again when visiting the same state.
+			q value of next state is 0 so (N, ht, t_dec) or any other state return does not have much effect.
+			"""
 
 	def _fancy_discount_reward(self, reward, inter_trial_interval = 7.5):
 		'''
@@ -205,23 +221,9 @@ class TokensEnv2(gym.Env):
 		if action >1 or action <-1:
 			raise Exception('action should belong to this set: [-1,0,1]')
 
-		coinToss = np.random.uniform()
 		Nt_prev = self.state[0]
 		ht_prev = self.state[1]
 		is_done = False
-
-		#Go left if prob is less than 0.5, go right otherwise if in-game time-steps less than max time-step
-		if self.time_steps < self.terminal:
-
-			if coinToss <= 0.5:
-				Nt = Nt_prev - 1
-
-			else:
-				Nt = Nt_prev + 1
-
-		#When max time-step is reached, ensure that the final state observed (Nt) is the same as the previous
-		else:
-			Nt = Nt_prev
 
 		#Play action if all previous actions are waiting (action = 0). Else, preserve previous played actions
 		if ht_prev == 0:
@@ -230,36 +232,65 @@ class TokensEnv2(gym.Env):
 		else:
 			ht = ht_prev
 
-
 		#If in-game time has reached max time step, assign a reward value if the correct side (based on sign) is chosen.
-		if self.time_steps == self.terminal:
-			if ht == 0:
-				reward = 0
-			else:
-				reward = self._indicator(self._sign(Nt),self._sign(ht))
-			next_state = np.zeros(2,dtype=np.int64)
-			next_state[0] = Nt
-			next_state[1] = ht
+
+		Nt = Nt_prev
+		next_state = np.zeros(2,dtype=np.int64)
+		dec_time = self.time_steps
+
+		if ht:
+			
+			next_state[0] = Nt # set n before
+
+			while self.time_steps < self.terminal:
+
+				if np.random.uniform() <= 0.5:
+					Nt -= 1
+				else:
+					Nt += 1
+
+				self.time_steps += 1
+
 			is_done = True
 
-			#fancy discounting reward is applied if initialised when the environment is constructed
+			# Nt was set before
+			next_state[1] = ht
+
 			if self.fancy_discount:
-				if ht == 0:
-					reward = 0
-				else:
-					reward = self._fancy_discount_reward(reward)
+				reward = self._indicator(self._sign(Nt),self._sign(ht))
+				reward = self._fancy_discount_reward(reward)
+			else:
+				reward = self._indicator(self._sign(Nt),self._sign(ht))
+
+			self.state = next_state
+			return next_state, reward, is_done, self.time_steps
 
 		else:
 
-			next_state = np.zeros(2,dtype=np.int64)
-			next_state[0] = Nt
+			if self.time_steps < self.terminal:
+				if np.random.uniform() <= 0.5:
+					Nt -= 1
+				else:
+					Nt += 1
+
+				self.time_steps += 1
+				is_done = False
+			else:
+				is_done = True
+
+			next_state[0] = Nt # set n after
 			next_state[1] = ht
-			self.state = next_state
-
 			reward = 0
-			self.time_steps += 1
+			self.state = next_state
+			return next_state, reward, is_done, self.time_steps
 
-		return next_state, reward, is_done, self.time_steps
+			"""
+			Here is what happens if step:
+			if the action is taken, only ht , time_step is changed, reward is calculated and the new state is returned.
+			This makes sense since for the Q table the state (N,0,t) and non zero action A leads to a good return.
+			So the agent is motivated to take this action again when visiting the same state.
+			q value of next state is 0 so (N, ht, t_dec) or any other state return does not have much effect.
+			"""
 
 
 	def _fancy_discount_reward(self, reward, inter_trial_interval = 7.5):
