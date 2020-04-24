@@ -139,7 +139,6 @@ class TokensEnv(gym.Env):
 		if action >1 or action <-1:
 			raise Exception('action should belong to this set: [-1,0,1]')
 
-		coinToss = np.random.uniform()
 		Nt_prev = self.state[0]
 		ht_prev = self.state[1]
 		is_done = False
@@ -147,7 +146,7 @@ class TokensEnv(gym.Env):
 		#Go left if prob is less than 0.5, go right otherwise if in-game time-steps less than max time-step
 		if self.time_steps < self.terminal:
 
-			if coinToss <= 0.5:
+			if np.random.uniform() <= 0.5:
 				Nt = Nt_prev - 1
 
 			else:
@@ -171,7 +170,7 @@ class TokensEnv(gym.Env):
 				reward = 0
 			else:
 				reward = self._indicator(self._sign(Nt),self._sign(ht))
-			next_state = np.zeros(2,dtype=np.int64)
+			next_state = np.zeros(3,dtype=np.int64)
 			next_state[0] = Nt
 			next_state[1] = ht
 			is_done = True
@@ -185,7 +184,7 @@ class TokensEnv(gym.Env):
 
 		else:
 
-			next_state = np.zeros(2,dtype=np.int64)
+			next_state = np.zeros(3,dtype=np.int64)
 			next_state[0] = Nt
 			next_state[1] = ht
 			self.state = next_state
@@ -193,6 +192,7 @@ class TokensEnv(gym.Env):
 			reward = 0
 			self.time_steps += 1
 
+		next_state[2] = self.time_steps
 		return next_state, reward, is_done, self.time_steps
 
 	def _fancy_discount_reward(self, reward, inter_trial_interval = 7.5):
@@ -391,7 +391,6 @@ class TokensEnv2(gym.Env):
 		if action >1 or action <-1:
 			raise Exception('action should belong to this set: [-1,0,1]')
 
-		coinToss = np.random.uniform()
 		Nt_prev = self.state[0]
 		ht_prev = self.state[1]
 		is_done = False
@@ -399,7 +398,7 @@ class TokensEnv2(gym.Env):
 		#Go left if prob is less than 0.5, go right otherwise if in-game time-steps less than max time-step
 		if self.time_steps < self.terminal:
 
-			if coinToss <= 0.5:
+			if np.random.uniform() <= 0.5:
 				Nt = Nt_prev - 1
 
 			else:
