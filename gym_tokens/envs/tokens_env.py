@@ -4,7 +4,6 @@ from gym.utils import seeding
 import numpy as np
 import unittest
 
-
 class TokensEnv(gym.Env):
 	metadata = {'render.modes': ['human']}
 
@@ -74,7 +73,10 @@ class TokensEnv(gym.Env):
 
 		#If in-game time has reached max time step, assign a reward value if the correct side (based on sign) is chosen.
 		if self.time_steps == self.terminal:
-			reward = self._indicator(self._sign(Nt),self._sign(ht))
+			if ht == 0:
+				reward = 0
+			else:
+				reward = self._indicator(self._sign(Nt),self._sign(ht))
 			next_state = np.zeros(3,dtype=np.int64)
 			next_state[0] = Nt
 			next_state[1] = ht
@@ -228,7 +230,10 @@ class TokensEnv2(gym.Env):
 
 		#If in-game time has reached max time step, assign a reward value if the correct side (based on sign) is chosen.
 		if self.time_steps == self.terminal:
-			reward = self._indicator(self._sign(Nt),self._sign(ht))
+			if ht == 0:
+				reward = 0
+			else:
+				reward = self._indicator(self._sign(Nt),self._sign(ht))
 			next_state = np.zeros(2,dtype=np.int64)
 			next_state[0] = Nt
 			next_state[1] = ht
