@@ -32,7 +32,9 @@ class SarsaAgent:
 		self.model = model
 		self.max_steps = max_steps
 
-	def get_actions(self, states, get_probs=False, game_time_step=None):
+	def get_actions(self, states, get_probs=False, game_time_step=None, return_wait = False):
+		if return_wait:
+			return 0
 		q_val = self.model.get_qVal(states)
 		actions = self.policy_type(q_val)[0]
 		action_mapped = self._mapFromIndexToTrueActions(actions)
@@ -56,7 +58,9 @@ class QlAgent:
 		self.model = model
 		self.max_steps = max_steps
 
-	def get_actions(self, states, get_probs=False, game_time_step=None):
+	def get_actions(self, states, get_probs=False, game_time_step=None, return_wait=False):
+		if return_wait:
+			return 0
 		q_val = self.model.get_qVal(states)
 		actions = self.policy_type(q_val)[0]
 		action_mapped = self._mapFromIndexToTrueActions(actions)
@@ -78,14 +82,18 @@ class ExpectedSARSA:
 		self.model = model
 		self.max_steps = max_steps
 
-	def get_actions(self, states, get_probs=False, game_time_step=None):
+	def get_actions(self, states, get_probs=False, game_time_step=None, return_wait=False):
 		q_val = self.model.get_qVal(states)
 		actions, probs = self.policy_type(q_val)
 		action_mapped = self._mapFromIndexToTrueActions(actions)
 
 		if get_probs:
+			if return_wait:
+				return 0, [1,0,0]
 			return action_mapped, probs
 		else:
+			if return_wait:
+				return 0
 			return action_mapped
 
 	def _mapFromIndexToTrueActions(self, actions):
@@ -106,14 +114,18 @@ class DoubleQLearning:
 		self.model2 = model2
 		self.max_steps = max_steps
 
-	def get_actions(self, states, get_probs=False, game_time_step=None):
+	def get_actions(self, states, get_probs=False, game_time_step=None, return_wait=False):
 		q_val = self.model1.get_qVal(states) + self.model2.get_qVal(states)
 		actions, probs = self.policy_type(q_val)
 		action_mapped = self._mapFromIndexToTrueActions(actions)
 
 		if get_probs:
+			if return_wait:
+				return 0, [1,0,0]
 			return action_mapped, probs
 		else:
+			if return_wait:
+				return 0
 			return action_mapped
 
 	def _mapFromIndexToTrueActions(self, actions):
@@ -133,7 +145,9 @@ class SemiSARSA:
 		self.model = model
 		self.max_steps = max_steps
 
-	def get_actions(self, states, get_probs=False, game_time_step=None, shape=None):
+	def get_actions(self, states, get_probs=False, game_time_step=None, shape=None, return_wait=False):
+		if return_wait:
+			return 0
 		q_val = np.array([ self.model.get_qVal(self._one_hot(states,a,shape)) for a in range(shape[-1]) ])
 		actions = self.policy_type(q_val)[0]
 		action_mapped = self._mapFromIndexToTrueActions(actions)
