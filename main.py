@@ -42,7 +42,7 @@ def main():
 	parser.add_argument("--convg", type=float, default=0.00001, help="convergence value")
 	parser.add_argument("--lr", type=float, default=0.1, help="learning rate")
 	parser.add_argument("--lr_final", type=float, default=0.0001, help="learning rate")
-	parser.add_argument("--save-interval", type=int, default=20000, help="number of updates between two saves (default: 30, 0 means no saving)")
+	parser.add_argument("--save-interval", type=int, default=1000, help="number of updates between two saves (default: 30, 0 means no saving)")
 	parser.add_argument("--eps_start", type=float, default=1.0, help="initial epsilon-greedy value")
 	parser.add_argument("--eps_final", type=float, default=0.01, help="final epsilon-greedy value")
 	parser.add_argument("--eps_games", type=int, default=40000, help="number of frames for eps greedy to go from init value to final value (default: 75k)")
