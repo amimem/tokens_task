@@ -7,7 +7,7 @@ import unittest
 class TokensEnv(gym.Env):
 	metadata = {'render.modes': ['human']}
 
-	def __init__(self, gamma, seed=7, terminal=3, fancy_discount=False):
+	def __init__(self, gamma, seed=7, terminal=3, fancy_discount=False, v='terminate'):
 		'''
 		This is the constructor for the tokens env.
 		: param gamma (float): discount factor
@@ -30,8 +30,15 @@ class TokensEnv(gym.Env):
 		self.reset()
 		self.terminal = terminal
 		self.fancy_discount = fancy_discount
+		self.v = v
 
 	def step(self, action):
+		if self.v == 'terminate':
+			return self._step_v_terminate(action)
+		elif self.v == 'horizon':
+			return self._step_v_horizon(action)
+
+	def _step_v_terminate(self, action):
 		'''
 		The function takes in action and send that action to the environment. 
 		: param action :(integer consisting of [-1,0,1])
@@ -118,6 +125,9 @@ class TokensEnv(gym.Env):
 			q value of next state is 0 so (N, ht, t_dec) or any other state return does not have much effect.
 			"""
 
+	def _step_v_horizon(self, action):
+		pass
+
 	def _fancy_discount_reward(self, reward, inter_trial_interval = 7.5):
 		'''
 		This function computes fancy discounting
@@ -184,7 +194,7 @@ class TokensEnv(gym.Env):
 class TokensEnv2(gym.Env):
 	metadata = {'render.modes': ['human']}
 
-	def __init__(self, gamma, seed=7, terminal=3, fancy_discount=False):
+	def __init__(self, gamma, seed=7, terminal=3, fancy_discount=False, v='terminate'):
 		'''
 		This is the constructor for the tokens env.
 		: param gamma (float): discount factor
@@ -206,8 +216,16 @@ class TokensEnv2(gym.Env):
 		self.reset()
 		self.terminal = terminal
 		self.fancy_discount = fancy_discount
+		self.v = v
 
 	def step(self, action):
+
+		if self.v == 'terminate':
+			return self._step_v_terminate(action)
+		elif self.v == 'horizon':
+			return self._step_v_horizon(action)
+
+	def _step_v_terminate(self, action):	
 		'''
 		The function takes in action and send that action to the environment. 
 		: param action :(integer consisting of [-1,0,1])
@@ -292,6 +310,8 @@ class TokensEnv2(gym.Env):
 			q value of next state is 0 so (N, ht, t_dec) or any other state return does not have much effect.
 			"""
 
+	def _step_v_horizon(self, action):
+		pass
 
 	def _fancy_discount_reward(self, reward, inter_trial_interval = 7.5):
 		'''
