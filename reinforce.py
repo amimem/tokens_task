@@ -90,6 +90,7 @@ def select_action(state, time_step):
 	sign(- = coordinate), sign(-1 == action)
 	so choosing a random action is more rewarding in general !
 	"""
+	#NOTE The above note does not apply to the env
 
 def finish_episode():
 	R = 0
@@ -142,9 +143,6 @@ for i_episode in range(1,10001):
 
 		#FIXME Actions are chosen even if they cause no effect on state.
 		#their log prob is used to adjust the weight
-
-		# if ts == 15 and action == 0:
-		# 	action = random.choice([-1,1])
 
 		state, reward, done, ts = env.step(action)
 		time_step += 1

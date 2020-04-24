@@ -146,9 +146,6 @@ def reinforce2():
 			m = Categorical(p)
 			a = m.sample()
 
-			# if s[2] == 15 and a == 0:
-			# 	a = torch.from_numpy(np.array(random.choice([-1,1])))
-
 			# add action and its log probablity to their corresponding lists
 			action_trajectory.append(a.item())
 			log_prob_trajectory.append(m.log_prob(a))
