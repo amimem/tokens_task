@@ -87,8 +87,10 @@ def main():
 	else:
 		block_discount = 0.75
 
-	env = gym.make('tokens-v0', gamma=block_discount, seed=args.seed, terminal=args.height, fancy_discount=args.fancy_discount, v='horizon')
+	env = gym.make('tokens-v0', gamma=block_discount, seed=args.seed, terminal=args.height, fancy_discount=args.fancy_discount, v= 'horizon')
 	txt_logger.info("Environments loaded\n")
+
+	return_zero = False
 
 	# Load training status
 
@@ -220,7 +222,7 @@ def main():
 			eps_track.set_eps(num_frames) # otherwise it is changes timestep to timestep
 
 
-		if env.v == 'horizon':
+		if env.v == 'horizon' and return_zero:
 			if not took_action:
 				action = monkeyAgent.get_actions(state, False, game_time_step)
 				next_state, reward, is_done, game_time_step = env.step(action)
