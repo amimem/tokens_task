@@ -57,13 +57,14 @@ def main():
 	parser.add_argument("--tmp_games", type=int, default=10000, help="number of frames for temperature to go from init value to final value (default: 75k)")
 	parser.add_argument('--softmax', help='use softmax exploration',action='store_true')
 	parser.add_argument('--eps_soft', help='use epsilon soft exploration',action='store_true')
+	parser.add_argument('--variation', default="horizon", help='which variation')
 
 
 	args = parser.parse_args()
 
 	#create train dir
 	date = datetime.datetime.now().strftime("%y-%m-%d-%H-%M-%S")
-	default_model_name = f"{args.env}_{args.algo}_seed{args.seed}_{date}"
+	default_model_name = f"{args.env}_{args.variation}_{args.fancy_discount}_{args.algo}_seed{args.seed}_{date}"
 
 	model_name = args.model or default_model_name
 	model_dir = utils.get_model_dir(model_name)
@@ -87,7 +88,7 @@ def main():
 	else:
 		block_discount = 0.75
 
-	env = gym.make('tokens-v0', gamma=block_discount, seed=args.seed, terminal=args.height, fancy_discount=args.fancy_discount, v= 'horizon')
+	env = gym.make(args.env, gamma=block_discount, seed=args.seed, terminal=args.height, fancy_discount=args.fancy_discount, v=args.variation)
 	txt_logger.info("Environments loaded\n")
 
 	return_zero = False
@@ -196,7 +197,7 @@ def main():
 
 	took_action = False
 
-	while num_games <= args.games: 
+	while num_games < args.games: 
 
 		traj.append(state[0].tolist())
 
