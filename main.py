@@ -185,7 +185,6 @@ def main():
 
 	# info = []
 
-	traj = []
 	traj_group = []
 
 	choice_made = []
@@ -198,8 +197,6 @@ def main():
 	took_action = False
 
 	while num_games < args.games: 
-
-		traj.append(state[0].tolist())
 
 		if args.softmax:
 			if args.fancy_tmp:
@@ -289,8 +286,7 @@ def main():
 			finalDecisionTime.append(abs(next_state[1])) # Why next_state? because it is the latest state that we have and we don't update state until after the if-else condition
 			finalRewardPerGame.append(reward)
 
-			traj_group.append(traj) # the list of all trajectories over all episodes
-			traj = []
+			traj_group.append(env.get_trajectory()) # the list of all trajectories over all episodes
 			next_state, game_time_step = env.reset()
 			took_action = False
 		else:
