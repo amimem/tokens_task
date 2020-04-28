@@ -30,6 +30,7 @@ class TokensEnv(gym.Env):
 		self.reset()
 		self.terminal = terminal
 		self.fancy_discount = fancy_discount
+		self.trajectory = [0]
 		self.v = v
 
 	def step(self, action):
@@ -80,6 +81,7 @@ class TokensEnv(gym.Env):
 				else:
 					Nt += 1
 
+				self.trajectory.append(Nt)
 				self.time_steps += 1
 
 			is_done = True
@@ -105,6 +107,7 @@ class TokensEnv(gym.Env):
 				else:
 					Nt += 1
 
+				self.trajectory.append(Nt)
 				self.time_steps += 1
 				is_done = False
 			else:
@@ -151,6 +154,8 @@ class TokensEnv(gym.Env):
 
 			else:
 				Nt = Nt_prev + 1
+
+			self.trajectory.append(Nt)
 
 		#When max time-step is reached, ensure that the final state observed (Nt) is the same as the previous
 		else:
@@ -247,6 +252,13 @@ class TokensEnv(gym.Env):
 		'''
 		return self.num_actions
 
+	def get_trajectory(self):
+		'''
+		This function returns the number of available actions of the environment.
+		: return (int) : number of actions
+		'''
+		return self.trajectory
+
 	def reset(self):
 		'''
 		This function resets the environment by setting the states, time_steps to zero
@@ -254,6 +266,7 @@ class TokensEnv(gym.Env):
 		self.state = np.zeros(3, dtype=np.int64)
 		self.done = False
 		self.time_steps = 0
+		self.trajectory = [0]
 
 		return self.state, self.time_steps 
 
@@ -283,6 +296,7 @@ class TokensEnv2(gym.Env):
 		self.reset()
 		self.terminal = terminal
 		self.fancy_discount = fancy_discount
+		self.trajectory = [0]
 		self.v = v
 
 	def step(self, action):
@@ -334,6 +348,7 @@ class TokensEnv2(gym.Env):
 				else:
 					Nt += 1
 
+				self.trajectory.append(Nt)
 				self.time_steps += 1
 
 			is_done = True
@@ -358,6 +373,7 @@ class TokensEnv2(gym.Env):
 				else:
 					Nt += 1
 
+				self.trajectory.append(Nt)
 				self.time_steps += 1
 				is_done = False
 			else:
@@ -403,6 +419,8 @@ class TokensEnv2(gym.Env):
 
 			else:
 				Nt = Nt_prev + 1
+			
+			self.trajectory.append(Nt)
 
 		#When max time-step is reached, ensure that the final state observed (Nt) is the same as the previous
 		else:
@@ -497,6 +515,13 @@ class TokensEnv2(gym.Env):
 		'''
 		return self.num_actions
 
+	def get_trajectory(self):
+		'''
+		This function returns the number of available actions of the environment.
+		: return (int) : number of actions
+		'''
+		return self.trajectory
+
 	def reset(self):
 		'''
 		This function resets the environment by setting the states, time_steps to zero
@@ -504,5 +529,6 @@ class TokensEnv2(gym.Env):
 		self.state = np.zeros(2, dtype=np.int64)
 		self.done = False
 		self.time_steps = 0
+		self.trajectory = [0]
 
 		return self.state, self.time_steps 
