@@ -43,7 +43,7 @@ def semiSARSA():
 	parser.add_argument("--model", default=None, help="name of the model (default: {ENV}_{ALGO}_{TIME})")
 	parser.add_argument("--seed", type=int, default=7, help="random seed (default: 7)")
 	parser.add_argument("--log_interval", type=int, default=1, help="number of updates between two logs (default: 1)")
-	parser.add_argument("--algo", default='sarsa', help="algorithm to use: sarsa | q-learning | e-sarsa | double-q | semi-sarsa | reinforce")
+	parser.add_argument("--algo", default='semi-sarsa', help="")
 	parser.add_argument("--convg", type=float, default=0.00001, help="convergence value")
 	parser.add_argument("--lr", type=float, default=0.1, help="learning rate")
 	parser.add_argument("--lr_final", type=float, default=0.0001, help="learning rate")
@@ -62,6 +62,7 @@ def semiSARSA():
 	parser.add_argument("--tmp_games", type=int, default=10000, help="number of frames for temperature to go from init value to final value (default: 75k)")
 	parser.add_argument('--softmax', help='use softmax exploration',action='store_true')
 	parser.add_argument('--eps_soft', help='use epsilon soft exploration',action='store_true')
+	parser.add_argument('--variation', default="horizon", help='which variation')
 
 
 	args = parser.parse_args()
@@ -92,7 +93,7 @@ def semiSARSA():
 	else:
 		block_discount = 0.75
 
-	env = gym.make('tokens-v0', gamma=block_discount, seed=args.seed, terminal=args.height, fancy_discount=args.fancy_discount)
+	env = gym.make(args.env, gamma=block_discount, seed=args.seed, terminal=args.height, fancy_discount=args.fancy_discount, v = args.variation)
 	txt_logger.info("Environments loaded\n")
 
 	status = {"num_frames": 0, "update": 0, "num_games":0}
@@ -152,7 +153,6 @@ def semiSARSA():
 
 	# info = []
 
-	traj = []
 	traj_group = []
 
 	choice_made = []
@@ -172,8 +172,6 @@ def semiSARSA():
 		state, game_time_step = env.reset()
 
 		action = monkeyAgent.get_actions(state, False, game_time_step, shape)
-
-		traj.append(state[0].tolist())
 
 		while 1:
 
@@ -212,8 +210,8 @@ def semiSARSA():
 				finalDecisionTime.append(abs(next_state[1])) # Why next_state? because it is the latest state that we have and we don't update state until after the if-else condition
 				finalRewardPerGame.append(reward)
 
-				traj_group.append(traj) # the list of all trajectories over all episodes
-				traj = []
+				traj_group.append(env.get_trajectory()) # the list of all trajectories over all episodes
+
 				break
 
 			else:
