@@ -31,6 +31,7 @@ class TokensEnv3(gym.Env):
 		self.fancy_discount = fancy_discount
 		self.v = v
 		self.took_action = False
+		self.reward = 0
 		self.reset()
 
 	def step(self, action):
@@ -79,10 +80,10 @@ class TokensEnv3(gym.Env):
 			next_state[1] = ht
 
 			if self.fancy_discount:
-				reward = self._indicator(self._sign(self.trajectory[-1]),self._sign(ht))
-				reward = self._fancy_discount_reward(reward)
+				reward = self.reward = self._indicator(self._sign(self.trajectory[-1]),self._sign(ht))
+				reward = self.reward = self._fancy_discount_reward(self.reward)
 			else:
-				reward = self._indicator(self._sign(self.trajectory[-1]),self._sign(ht))
+				reward = self.reward = self._indicator(self._sign(self.trajectory[-1]),self._sign(ht))
 
 			self.state = next_state
 			return next_state, reward, is_done, self.time_steps
@@ -98,7 +99,7 @@ class TokensEnv3(gym.Env):
 
 			next_state[0] = Nt # set n after
 			next_state[1] = ht
-			reward = 0
+			reward = self.reward = 0
 			next_state[2] = self.time_steps
 			self.state = next_state
 			return next_state, reward, is_done, self.time_steps
@@ -146,10 +147,10 @@ class TokensEnv3(gym.Env):
 
 		if ht and not self.took_action:
 			self.took_action = True
-			reward = self._indicator(self._sign(self.trajectory[-1]),self._sign(ht))
+			reward = self.reward = self._indicator(self._sign(self.trajectory[-1]),self._sign(ht))
 			#fancy discounting reward is applied if initialised when the environment is constructed
 			if self.fancy_discount:
-				reward = self._fancy_discount_reward(reward)
+				reward = self.reward = self._fancy_discount_reward(self.reward)
 		else:
 			reward = 0
 
@@ -285,6 +286,7 @@ class TokensEnv3(gym.Env):
 		self.done = False
 		self.took_action = False
 		self.time_steps = 0
+		self.reward = 0
 		self.trajectory = [0]
 		self.set_trajectory()
 		return self.state, self.time_steps 
@@ -315,6 +317,7 @@ class TokensEnv4(gym.Env):
 		self.terminal = terminal
 		self.fancy_discount = fancy_discount
 		self.took_action = False
+		self.reward = 0
 		self.trajectory = [0]
 		self.v = v
 		self.reset()
@@ -367,10 +370,10 @@ class TokensEnv4(gym.Env):
 			next_state[1] = ht
 
 			if self.fancy_discount:
-				reward = self._indicator(self._sign(self.trajectory[-1]),self._sign(ht))
-				reward = self._fancy_discount_reward(reward)
+				reward = self.reward = self._indicator(self._sign(self.trajectory[-1]),self._sign(ht))
+				reward = self.reward = self._fancy_discount_reward(reward)
 			else:
-				reward = self._indicator(self._sign(self.trajectory[-1]),self._sign(ht))
+				reward = self.reward = self._indicator(self._sign(self.trajectory[-1]),self._sign(ht))
 
 			self.state = next_state
 			return next_state, reward, is_done, self.time_steps
@@ -386,7 +389,7 @@ class TokensEnv4(gym.Env):
 
 			next_state[0] = Nt # set n after
 			next_state[1] = ht
-			reward = 0
+			reward = self.reward = 0
 			self.state = next_state
 			return next_state, reward, is_done, self.time_steps
 
@@ -536,6 +539,7 @@ class TokensEnv4(gym.Env):
 		self.done = False
 		self.took_action = False
 		self.time_steps = 0
+		self.reward = 0
 		self.trajectory = [0]
 		self.set_trajectory()
 		return self.state, self.time_steps 
