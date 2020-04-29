@@ -19,3 +19,8 @@ register(
 	id='tokens-v4',
 	entry_point='gym_tokens.envs:TokensEnv4'
 )
+
+register(
+	id='tokens-v5',
+	entry_point='gym_tokens.envs:TokensEnvS'
+)
