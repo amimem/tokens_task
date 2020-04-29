@@ -278,15 +278,16 @@ def main():
 			decisionTime[decision_step-1] += 1 # after each episode is done, one is added to the corresponding element in decision time,
 			# so after 100 episodes, we have a histogram of decision times
 
-			if abs(next_state[1]) == args.height+1: # if we made no decision till the end
+			if abs(next_state[1]) == args.height+1 or abs(next_state[1]) == 0: # if we made no decision till the end
 				last_choice += 1 # last choice represents the number of episodes in which we waited until the end
 
+			traj = env.get_trajectory()
 			choice_made.append(_sign(next_state[1])) # these arays are updated after each episode, not after each timestep
-			correct_choice.append(_sign(next_state[0]))
+			correct_choice.append(_sign(traj[-1]))
 			finalDecisionTime.append(abs(next_state[1])) # Why next_state? because it is the latest state that we have and we don't update state until after the if-else condition
 			finalRewardPerGame.append(reward)
 
-			traj_group.append(env.get_trajectory()) # the list of all trajectories over all episodes
+			traj_group.append(traj) # the list of all trajectories over all episodes
 			next_state, game_time_step = env.reset()
 			took_action = False
 		else:
