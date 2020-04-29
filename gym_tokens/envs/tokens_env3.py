@@ -4,7 +4,7 @@ from gym.utils import seeding
 import numpy as np
 import unittest
 
-class TokensEnv(gym.Env):
+class TokensEnv3(gym.Env):
 	metadata = {'render.modes': ['human']}
 
 	def __init__(self, alpha, seed=7, terminal=3, fancy_discount=False, v='terminate'):
@@ -23,15 +23,15 @@ class TokensEnv(gym.Env):
 		self.action_space = spaces.Discrete(3)
 		self.observation_space = spaces.Box(low=np.array([-terminal, -terminal, 0]), high=np.array([terminal, terminal, terminal]), dtype=np.int64)
 
-		
 		# initial condition
 		self.state = np.zeros(3) #index 0: Nt, index 1: ht, index 2: time_step
 		self.alpha = alpha
 		self.trajectory = [0]
-		self.reset()
 		self.terminal = terminal
 		self.fancy_discount = fancy_discount
 		self.v = v
+		self.took_action = False
+		self.reset()
 
 	def step(self, action):
 		if self.v == 'terminate':
@@ -72,41 +72,25 @@ class TokensEnv(gym.Env):
 		if ht:
 			
 			next_state[0] = Nt # set n before
-
-			while self.time_steps < self.terminal:
-
-				if np.random.uniform() <= 0.5:
-					Nt -= 1
-				else:
-					Nt += 1
-
-				self.trajectory.append(Nt)
-				self.time_steps += 1
-
+			self.time_steps = self.terminal
 			is_done = True
 
 			# Nt was set before
 			next_state[1] = ht
 
 			if self.fancy_discount:
-				reward = self._indicator(self._sign(Nt),self._sign(ht))
+				reward = self._indicator(self._sign(self.trajectory[-1]),self._sign(ht))
 				reward = self._fancy_discount_reward(reward)
 			else:
-				reward = self._indicator(self._sign(Nt),self._sign(ht))
+				reward = self._indicator(self._sign(self.trajectory[-1]),self._sign(ht))
 
-			next_state[2] = dec_time
 			self.state = next_state
 			return next_state, reward, is_done, self.time_steps
 
 		else:
 
 			if self.time_steps < self.terminal:
-				if np.random.uniform() <= 0.5:
-					Nt -= 1
-				else:
-					Nt += 1
-
-				self.trajectory.append(Nt)
+				Nt = self.trajectory[self.time_steps + 1]
 				self.time_steps += 1
 				is_done = False
 			else:
@@ -147,14 +131,7 @@ class TokensEnv(gym.Env):
 
 		#Go left if prob is less than 0.5, go right otherwise if in-game time-steps less than max time-step
 		if self.time_steps < self.terminal:
-
-			if np.random.uniform() <= 0.5:
-				Nt = Nt_prev - 1
-
-			else:
-				Nt = Nt_prev + 1
-
-			self.trajectory.append(Nt)
+			Nt = self.trajectory[self.time_steps + 1]
 
 		#When max time-step is reached, ensure that the final state observed (Nt) is the same as the previous
 		else:
@@ -167,33 +144,28 @@ class TokensEnv(gym.Env):
 		else:
 			ht = ht_prev
 
+		if ht and not self.took_action:
+			self.took_action = True
+			reward = self._indicator(self._sign(self.trajectory[-1]),self._sign(ht))
+			#fancy discounting reward is applied if initialised when the environment is constructed
+			if self.fancy_discount:
+				reward = self._fancy_discount_reward(reward)
+		else:
+			reward = 0
+
 
 		#If in-game time has reached max time step, assign a reward value if the correct side (based on sign) is chosen.
 		if self.time_steps == self.terminal:
-			if ht == 0:
-				reward = 0
-			else:
-				reward = self._indicator(self._sign(Nt),self._sign(ht))
 			next_state = np.zeros(3,dtype=np.int64)
 			next_state[0] = Nt
 			next_state[1] = ht
 			is_done = True
 
-			#fancy discounting reward is applied if initialised when the environment is constructed
-			if self.fancy_discount:
-				if ht == 0:
-					reward = 0
-				else:
-					reward = self._fancy_discount_reward(reward)
-
 		else:
-
 			next_state = np.zeros(3,dtype=np.int64)
 			next_state[0] = Nt
 			next_state[1] = ht
 			self.state = next_state
-
-			reward = 0
 			self.time_steps += 1
 
 		next_state[2] = self.time_steps
@@ -292,19 +264,33 @@ class TokensEnv(gym.Env):
 				kvec=np.arange(0,(np.min((Nc,(T-1)/2-NL))+1))
 				return np.power(p,Nc)*np.sum(np.asarray([self.binomial(int(Nc), int(k)) for k in kvec]))
 
+	def set_trajectory(self):
+		Nt = self.state[0]
+		t = self.time_steps
+		while t < self.terminal:
+
+			if np.random.uniform() <= 0.5:
+				Nt -= 1
+			else:
+				Nt += 1
+
+			self.trajectory.append(Nt)
+			t += 1
+
 	def reset(self):
 		'''
 		This function resets the environment by setting the states, time_steps to zero
 		'''
 		self.state = np.zeros(3, dtype=np.int64)
 		self.done = False
+		self.took_action = False
 		self.time_steps = 0
 		self.trajectory = [0]
-
+		self.set_trajectory()
 		return self.state, self.time_steps 
 
 
-class TokensEnv2(gym.Env):
+class TokensEnv4(gym.Env):
 	metadata = {'render.modes': ['human']}
 
 	def __init__(self, alpha, seed=7, terminal=3, fancy_discount=False, v='terminate'):
@@ -326,11 +312,12 @@ class TokensEnv2(gym.Env):
 		# initial condition
 		self.state = np.zeros(2) #index 0: Nt, index 1: ht
 		self.alpha = alpha
-		self.reset()
 		self.terminal = terminal
 		self.fancy_discount = fancy_discount
+		self.took_action = False
 		self.trajectory = [0]
 		self.v = v
+		self.reset()
 
 	def step(self, action):
 
@@ -373,27 +360,17 @@ class TokensEnv2(gym.Env):
 		if ht:
 			
 			next_state[0] = Nt # set n before
-
-			while self.time_steps < self.terminal:
-
-				if np.random.uniform() <= 0.5:
-					Nt -= 1
-				else:
-					Nt += 1
-
-				self.trajectory.append(Nt)
-				self.time_steps += 1
-
+			self.time_steps = self.terminal
 			is_done = True
 
 			# Nt was set before
 			next_state[1] = ht
 
 			if self.fancy_discount:
-				reward = self._indicator(self._sign(Nt),self._sign(ht))
+				reward = self._indicator(self._sign(self.trajectory[-1]),self._sign(ht))
 				reward = self._fancy_discount_reward(reward)
 			else:
-				reward = self._indicator(self._sign(Nt),self._sign(ht))
+				reward = self._indicator(self._sign(self.trajectory[-1]),self._sign(ht))
 
 			self.state = next_state
 			return next_state, reward, is_done, self.time_steps
@@ -401,12 +378,7 @@ class TokensEnv2(gym.Env):
 		else:
 
 			if self.time_steps < self.terminal:
-				if np.random.uniform() <= 0.5:
-					Nt -= 1
-				else:
-					Nt += 1
-
-				self.trajectory.append(Nt)
+				Nt = self.trajectory[self.time_steps + 1]
 				self.time_steps += 1
 				is_done = False
 			else:
@@ -446,14 +418,7 @@ class TokensEnv2(gym.Env):
 
 		#Go left if prob is less than 0.5, go right otherwise if in-game time-steps less than max time-step
 		if self.time_steps < self.terminal:
-
-			if np.random.uniform() <= 0.5:
-				Nt = Nt_prev - 1
-
-			else:
-				Nt = Nt_prev + 1
-			
-			self.trajectory.append(Nt)
+			Nt = self.trajectory[self.time_steps + 1]
 
 		#When max time-step is reached, ensure that the final state observed (Nt) is the same as the previous
 		else:
@@ -466,33 +431,28 @@ class TokensEnv2(gym.Env):
 		else:
 			ht = ht_prev
 
+		if ht and not self.took_action:
+			self.took_action = True
+			reward = self._indicator(self._sign(self.trajectory[-1]),self._sign(ht))
+			#fancy discounting reward is applied if initialised when the environment is constructed
+			if self.fancy_discount:
+				reward = self._fancy_discount_reward(reward)
+		else:
+			reward = 0
+
 
 		#If in-game time has reached max time step, assign a reward value if the correct side (based on sign) is chosen.
 		if self.time_steps == self.terminal:
-			if ht == 0:
-				reward = 0
-			else:
-				reward = self._indicator(self._sign(Nt),self._sign(ht))
 			next_state = np.zeros(2,dtype=np.int64)
 			next_state[0] = Nt
 			next_state[1] = ht
 			is_done = True
 
-			#fancy discounting reward is applied if initialised when the environment is constructed
-			if self.fancy_discount:
-				if ht == 0:
-					reward = 0
-				else:
-					reward = self._fancy_discount_reward(reward)
-
 		else:
-
 			next_state = np.zeros(2,dtype=np.int64)
 			next_state[0] = Nt
 			next_state[1] = ht
 			self.state = next_state
-
-			reward = 0
 			self.time_steps += 1
 
 		return next_state, reward, is_done, self.time_steps
@@ -555,13 +515,27 @@ class TokensEnv2(gym.Env):
 		'''
 		return self.trajectory
 
+	def set_trajectory(self):
+		Nt = self.state[0]
+		t = self.time_steps
+		while t < self.terminal:
+
+			if np.random.uniform() <= 0.5:
+				Nt -= 1
+			else:
+				Nt += 1
+
+			self.trajectory.append(Nt)
+			t += 1
+
 	def reset(self):
 		'''
 		This function resets the environment by setting the states, time_steps to zero
 		'''
 		self.state = np.zeros(2, dtype=np.int64)
 		self.done = False
+		self.took_action = False
 		self.time_steps = 0
 		self.trajectory = [0]
-
+		self.set_trajectory()
 		return self.state, self.time_steps 
