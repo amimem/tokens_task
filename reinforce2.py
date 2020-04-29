@@ -58,6 +58,7 @@ def reinforce2():
 	parser.add_argument("--height", type=int, default=15, help="game tree height")
 	parser.add_argument('--fancy_discount', help='use fancy discounting rewards',action='store_true')
 	parser.add_argument('--fast_block', help='fast block discounting',action='store_true')
+	parser.add_argument('--variation', default="horizon", help='which variation')
 
 	args = parser.parse_args()
 
@@ -78,23 +79,22 @@ def reinforce2():
 	txt_logger.info("{}\n".format(" ".join(sys.argv)))
 	txt_logger.info("{}\n".format(args))
 
-	# Set seed for all randomness sources
-	utils.seed(args.seed)
-
 	if args.fast_block:
 		block_discount = 0.25
 
 	else:
 		block_discount = 0.75
 
-	env = gym.make('tokens-v1', gamma=block_discount, seed=args.seed, terminal=args.height, fancy_discount=args.fancy_discount, v='horizon')
+	env = gym.make(args.env, alpha=block_discount, seed=args.seed, terminal=args.height, fancy_discount=args.fancy_discount, v=args.variation)
 	txt_logger.info("Environments loaded\n")
 
 	status = {"num_episode":0}
 	txt_logger.info("Training status loaded\n")
 
-	num_actions = env.get_num_actions()
+	# Set seed for all randomness sources
+	utils.seed(args.seed)
 
+	num_actions = env.get_num_actions()
 
 	num_episode = status["num_episode"]
 	prev_num_episode = 0
@@ -161,7 +161,7 @@ def reinforce2():
 			s = s_prime
 
 		num_episode+=1
-		run_trajectories.append(state_trajectory)
+		run_trajectories.append(env.get_trajectory())
 		decision_step = _augState(abs(s[1]), args.height) # taking abs means that decision step is always between 15 and 31
 		episodes_decison_times[decision_step-1] += 1 # after each episode is done, one is added to the corresponding element in decision time,
 		#FIXME check the index
@@ -171,13 +171,25 @@ def reinforce2():
 			last += 1 # last choice represents the number of episodes in which we waited until the end
 
 		episode_choice.append(_sign(s[1])) # these arays are updated after each episode, not after each timestep
-		correct_choice.append(_sign(s[0]))
+		correct_choice.append(_sign(env.trajectory[-1]))
 		final_episode_decison_time.append(abs(s[1])) # Why next_state? because it is the latest state that we have and we don't update state until after the if-else condition
-		if reward > 0:
-			numCorrectChoice += 1
-			numRecentCorrectChoice.append(1)
+
+		if args.env == 'tokens-v3' or args.env == 'tokens-v4':
+			episode_returns.append(env.reward) # reward per episode
+			if env.reward > 0:
+				numCorrectChoice += 1
+				numRecentCorrectChoice.append(1)
+			else:
+				numRecentCorrectChoice.append(0) # binary value, correct choice or not per episode
+
 		else:
-			numRecentCorrectChoice.append(0) # binary value, correct choice or not per episode
+			episode_returns.append(reward) # reward per episode
+			if reward > 0:
+				numCorrectChoice += 1
+				numRecentCorrectChoice.append(1)
+			else:
+				numRecentCorrectChoice.append(0) # binary value, correct choice or not per episode
+
 		episode_returns.append(reward)
 
 		# compute returns and save them in an array (source: https://stackoverflow.com/questions/47970683/vectorize-a-numpy-discount-calculation)
@@ -228,7 +240,7 @@ def reinforce2():
 				"G {} | D {} | LR {:.5f} | Last {} | R {:.3f} | Avg R {:.3f} | Avg C {:.3f} | Rec C {:.3f} | DT {}"
 				.format(*data))
 
-			csv_header = ["trajectory", "episode_choice", "correct_choice", "decision_time", "reward_received"]
+			csv_header = ["trajectory", "choice_made", "correct_choice", "decision_time", "reward_received"]
 			csv_data = [run_trajectories[prev_num_episode], episode_choice[prev_num_episode], correct_choice[prev_num_episode], final_episode_decison_time[prev_num_episode], episode_returns[prev_num_episode]]
 
 			if num_episode == 1:
