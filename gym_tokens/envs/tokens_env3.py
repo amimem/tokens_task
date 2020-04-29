@@ -231,40 +231,6 @@ class TokensEnv3(gym.Env):
 		'''
 		return self.trajectory
 
-	def binomial(self, n, k):
-		if 0 <= k <= n:
-			ntok = 1
-			ktok = 1
-			for t in range(1, min(k, n - k) + 1):
-				ntok *= n
-				ktok *= t
-				n -= 1
-			return ntok // ktok
-		else:
-			return 0
-
-	def get_pt_plus(self,t,Nt ,p=0.5):
-		'''
-		Outputs probability that state>=0 at time T if state is Nt at time t, for +ve jump probability, p.
-		Behaves strangely for T a multiple of 10...
-		'''
-		T = self.terminal
-		if t==-1:
-			return p
-		else:
-			tp = T - t 
-			Nt_plus=(t+Nt)/2.
-			if tp<(T-1)/2.-(t-Nt)/2.:
-				if Nt>0:
-					return 1
-				else:
-					return 0
-			else:
-				NL=(t-Nt)/2.
-				Nc=T-t
-				kvec=np.arange(0,(np.min((Nc,(T-1)/2-NL))+1))
-				return np.power(p,Nc)*np.sum(np.asarray([self.binomial(int(Nc), int(k)) for k in kvec]))
-
 	def set_trajectory(self):
 		Nt = self.state[0]
 		t = self.time_steps
