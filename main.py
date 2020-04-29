@@ -263,13 +263,22 @@ def main():
 
 		if is_done:
 			num_games+=1
-			totalReturns.append(reward) # reward per episode
 
-			if reward > 0:
-				numCorrectChoice += 1
-				numRecentCorrectChoice.append(1)
+			if args.env == 'tokens-v3' or args.env == 'tokens-v4':
+				totalReturns.append(env.reward) # reward per episode
+				if env.reward > 0:
+					numCorrectChoice += 1
+					numRecentCorrectChoice.append(1)
+				else:
+					numRecentCorrectChoice.append(0) # binary value, correct choice or not per episode
+
 			else:
-				numRecentCorrectChoice.append(0) # binary value, correct choice or not per episode
+				totalReturns.append(reward) # reward per episode
+				if reward > 0:
+					numCorrectChoice += 1
+					numRecentCorrectChoice.append(1)
+				else:
+					numRecentCorrectChoice.append(0) # binary value, correct choice or not per episode
 
 			lossPerEpisode.append(np.sum(totalLoss))
 			totalLoss = []
@@ -285,7 +294,10 @@ def main():
 			choice_made.append(_sign(next_state[1])) # these arays are updated after each episode, not after each timestep
 			correct_choice.append(_sign(traj[-1]))
 			finalDecisionTime.append(abs(next_state[1])) # Why next_state? because it is the latest state that we have and we don't update state until after the if-else condition
-			finalRewardPerGame.append(reward)
+			if args.env == 'tokens-v3' or args.env == 'tokens-v4':
+				finalRewardPerGame.append(env.reward)
+			else:
+				finalRewardPerGame.append(reward)
 
 			traj_group.append(traj) # the list of all trajectories over all episodes
 			next_state, game_time_step = env.reset()
