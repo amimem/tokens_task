@@ -190,8 +190,6 @@ def reinforce2():
 			else:
 				numRecentCorrectChoice.append(0) # binary value, correct choice or not per episode
 
-		episode_returns.append(reward)
-
 		# compute returns and save them in an array (source: https://stackoverflow.com/questions/47970683/vectorize-a-numpy-discount-calculation)
 		c = [1, -args.gamma]
 		b = [1]
