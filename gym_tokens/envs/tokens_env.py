@@ -7,10 +7,10 @@ import unittest
 class TokensEnv(gym.Env):
 	metadata = {'render.modes': ['human']}
 
-	def __init__(self, gamma, seed=7, terminal=3, fancy_discount=False, v='terminate'):
+	def __init__(self, alpha, seed=7, terminal=3, fancy_discount=False, v='terminate'):
 		'''
 		This is the constructor for the tokens env.
-		: param gamma (float): discount factor
+		: param alpha (float): discount factor
 		: param seed (int): random seed value
 		: param terminal (int): max time step for the environment
 		: param fancy_discount (boolean): uses fancy discounting to compute reward 
@@ -26,7 +26,7 @@ class TokensEnv(gym.Env):
 		
 		# initial condition
 		self.state = np.zeros(3) #index 0: Nt, index 1: ht, index 2: time_step
-		self.gamma = gamma
+		self.alpha = alpha
 		self.reset()
 		self.terminal = terminal
 		self.fancy_discount = fancy_discount
@@ -206,7 +206,7 @@ class TokensEnv(gym.Env):
 		: param reward (int) : reward value before any discounting is applied. Value should be 0 or 1. 
 		: return (float) : fancy discounted reward
 		'''
-		return reward / self.terminal / (np.absolute(self.state[1])/self.terminal + self.gamma * (1 - np.absolute(self.state[1]) / self.terminal) + inter_trial_interval/self.terminal)
+		return reward / self.terminal / (np.absolute(self.state[1])/self.terminal + self.alpha * (1 - np.absolute(self.state[1]) / self.terminal) + inter_trial_interval/self.terminal)
 
 	def _sign(self, num):
 		'''
@@ -274,10 +274,10 @@ class TokensEnv(gym.Env):
 class TokensEnv2(gym.Env):
 	metadata = {'render.modes': ['human']}
 
-	def __init__(self, gamma, seed=7, terminal=3, fancy_discount=False, v='terminate'):
+	def __init__(self, alpha, seed=7, terminal=3, fancy_discount=False, v='terminate'):
 		'''
 		This is the constructor for the tokens env.
-		: param gamma (float): discount factor
+		: param alpha (float): discount factor
 		: param seed (int): random seed value
 		: param terminal (int): max time step for the environment
 		: param fancy_discount (boolean): uses fancy discounting to compute reward 
@@ -292,7 +292,7 @@ class TokensEnv2(gym.Env):
 		
 		# initial condition
 		self.state = np.zeros(2) #index 0: Nt, index 1: ht
-		self.gamma = gamma
+		self.alpha = alpha
 		self.reset()
 		self.terminal = terminal
 		self.fancy_discount = fancy_discount
@@ -470,7 +470,7 @@ class TokensEnv2(gym.Env):
 		: param reward (int) : reward value before any discounting is applied. Value should be 0 or 1. 
 		: return (float) : fancy discounted reward
 		'''
-		return reward / self.terminal / (np.absolute(self.state[1])/self.terminal + self.gamma * (1 - np.absolute(self.state[1]) / self.terminal) + inter_trial_interval/self.terminal)
+		return reward / self.terminal / (np.absolute(self.state[1])/self.terminal + self.alpha * (1 - np.absolute(self.state[1]) / self.terminal) + inter_trial_interval/self.terminal)
 
 	def _sign(self, num):
 		'''
