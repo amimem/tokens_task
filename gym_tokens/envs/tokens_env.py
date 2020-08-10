@@ -25,9 +25,10 @@ class TokensEnv(gym.Env):
 
 		
 		# initial condition
-		self.state = np.zeros(3) #index 0: Nt, index 1: ht, index 2: time_step
+		self.state = np.zeros(3) #index 0: Nt, index 1: ht, index 2: time_step 
 		self.alpha = alpha
 		self.reset()
+		self.reward = 1
 		self.terminal = terminal
 		self.fancy_discount = fancy_discount
 		self.trajectory = [0]
@@ -234,7 +235,7 @@ class TokensEnv(gym.Env):
 		: return num (int) : 1 if both inputs are the same and 0 otherwise
 		'''
 		if num1 == num2:
-			return 1
+			return self.reward
 		else:
 			return 0
 
@@ -259,6 +260,9 @@ class TokensEnv(gym.Env):
 		: return (int) : number of actions
 		'''
 		return self.trajectory
+
+	def set_reward(self, reward):
+		self.reward = reward
 
 	def reset(self):
 		'''
