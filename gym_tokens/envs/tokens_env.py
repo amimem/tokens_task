@@ -3,9 +3,14 @@ from gym import error, spaces, utils
 from gym.utils import seeding
 import numpy as np
 import unittest
+from gym.envs.classic_control import rendering
 
 class TokensEnv(gym.Env):
-	metadata = {'render.modes': ['human']}
+
+	metadata = {
+		'render.modes': ['human', 'rgb_array'],
+		'video.frames_per_second': 50
+		}
 
 	def __init__(self, alpha, seed=7, terminal=3, fancy_discount=False, v='terminate'):
 		'''
@@ -27,12 +32,14 @@ class TokensEnv(gym.Env):
 		# initial condition
 		self.state = np.zeros(3) #index 0: Nt, index 1: ht, index 2: time_step 
 		self.alpha = alpha
-		self.reset()
 		self.reward = 1
 		self.terminal = terminal
+		self.counter = np.array([0, self.terminal, 0])
+		self.reset()
 		self.fancy_discount = fancy_discount
 		self.trajectory = [0]
 		self.v = v
+		self.viewer = None
 
 	def step(self, action):
 		if self.v == 'terminate':
@@ -79,8 +86,10 @@ class TokensEnv(gym.Env):
 
 				if np.random.uniform() <= 0.5:
 					Nt -= 1
+					self.counter[0] += 1
 				else:
 					Nt += 1
+					self.counter[2] += 1
 
 				self.trajectory.append(Nt)
 				self.time_steps += 1
@@ -105,8 +114,10 @@ class TokensEnv(gym.Env):
 			if self.time_steps < self.terminal:
 				if np.random.uniform() <= 0.5:
 					Nt -= 1
+					self.counter[0] += 1
 				else:
 					Nt += 1
+					self.counter[2] += 1
 
 				self.trajectory.append(Nt)
 				self.time_steps += 1
@@ -119,6 +130,7 @@ class TokensEnv(gym.Env):
 			reward = 0
 			next_state[2] = self.time_steps
 			self.state = next_state
+			self.counter[1] = self.terminal - self.counter[0] - self.counter[2]
 			return next_state, reward, is_done, self.time_steps
 
 		"""
@@ -264,11 +276,88 @@ class TokensEnv(gym.Env):
 	def set_reward(self, reward):
 		self.reward = reward
 
+		# Taken from: https://github.com/openai/gym/blob/master/gym/envs/classic_control/cartpole.py
+	def render(self, mode='human', state = None):
+		screen_width = 1200
+		screen_height = 800
+		radius = 100
+		token_radius = 4
+		distance_scale = 2.5
+		tokens_distance_scale = 3
+		num_tokens = self.terminal
+
+		if self.viewer is None:
+
+			self.num_range = np.arange(start = -radius + token_radius, stop=radius - token_radius + token_radius*tokens_distance_scale , step=token_radius*tokens_distance_scale)
+			self.coords_list = []
+
+			while len(self.coords_list) < num_tokens:
+				coords = np.random.choice(self.num_range, 2)
+
+				while coords[0]**2 + coords[1]**2 > radius**2:
+					coords = np.random.choice(self.num_range, 2)
+				
+				self.coords_list.append(coords)
+				self.coords_list = [list(x) for x in {(tuple(e)) for e in self.coords_list}]
+
+			self.token_translates = []
+
+			for coords in self.coords_list:
+				self.token_translates.append(rendering.Transform(translation = (coords[0], coords[1])))
+
+			self.viewer = rendering.Viewer(screen_width, screen_height) # Creates a view using the specified width and height
+
+			self.middle_trans = rendering.Transform(translation = (screen_width/2, screen_height/2))
+			self.right_trans = rendering.Transform(translation = (distance_scale*radius, 0.0))
+			self.left_trans = rendering.Transform(translation = (-distance_scale*radius, 0.0))
+
+			self.middle_circle = rendering.make_circle(radius, filled=False)
+			self.middle_circle.add_attr(self.middle_trans)
+			self.viewer.add_geom(self.middle_circle)
+
+			self.right_circle = rendering.make_circle(radius, filled=False)
+			self.right_circle.add_attr(self.middle_trans)
+			self.right_circle.add_attr(self.right_trans)
+			self.viewer.add_geom(self.right_circle)
+
+			self.left_circle = rendering.make_circle(radius, filled=False)
+			self.left_circle.add_attr(self.middle_trans)
+			self.left_circle.add_attr(self.left_trans)
+			self.viewer.add_geom(self.left_circle)
+
+			for i in range(num_tokens):
+				exec(f'self.token_{i} = rendering.make_circle(token_radius, filled=True)')
+				exec(f'self.token_{i}.set_color(1.0, .27, .0)')
+				exec(f'self.token_{i}.add_attr(self.middle_trans)')
+				exec(f'self.token_{i}.add_attr(self.token_translates[{i}])')
+				exec(f'self.viewer.add_geom(self.token_{i})')
+
+		if self.state is None:
+			return None
+
+		for i in range(self.counter[1]):
+			pass
+
+		for i in range(self.counter[0]):
+			exec(f'self.token_translates[{i}].set_translation(-distance_scale*radius + self.coords_list[{i}][0] ,  self.coords_list[{i}][1])')
+
+		for i in range(self.counter[2]):
+			exec(f'self.token_translates[{i}].set_translation(distance_scale*radius + self.coords_list[{i}][0] , self.coords_list[{i}][1])')
+			
+
+		return self.viewer.render(return_rgb_array=mode == 'rgb_array')
+
+	def close(self):
+		if self.viewer:
+			self.viewer.close()
+			self.viewer = None
+
 	def reset(self):
 		'''
 		This function resets the environment by setting the states, time_steps to zero
 		'''
 		self.state = np.zeros(3, dtype=np.int64)
+		self.counter = np.array([0, self.terminal, 0])
 		self.done = False
 		self.time_steps = 0
 		self.trajectory = [0]
@@ -527,6 +616,40 @@ class TokensEnv2(gym.Env):
 		: return (int) : number of actions
 		'''
 		return self.trajectory
+
+	# Taken from: https://github.com/openai/gym/blob/master/gym/envs/classic_control/cartpole.py
+	def render(self, mode='human'):
+		screen_width = 600
+		screen_height = 400
+
+		if self.viewer is None:
+			from gym.envs.classic_control import rendering
+			self.viewer = rendering.Viewer(screen_width, screen_height) # Creates a view using the specified width and height
+
+			self.trans = rendering.Transform()
+
+			self.axle = rendering.make_circle(50, filled=False)
+			self.axle.add_attr(self.trans)
+			self.axle.set_color(.5, .5, .8)
+			self.viewer.add_geom(self.axle)
+
+		if self.state is None:
+			return None
+
+		# Edit the pole polygon vertex
+		# axle = self.axle
+		
+		# x = self.state
+		# cartx = x[0] + screen_width / 2.0  # MIDDLE OF CART
+		# self.carttrans.set_translation(cartx, carty)
+		# self.poletrans.set_rotation(-x[2])
+
+		return self.viewer.render(return_rgb_array=mode == 'rgb_array')
+
+	def close(self):
+		if self.viewer:
+			self.viewer.close()
+			self.viewer = None
 
 	def reset(self):
 		'''

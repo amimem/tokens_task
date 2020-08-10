@@ -222,6 +222,8 @@ def main():
 		else:
 			eps_track.set_eps(num_frames) # otherwise it is changes timestep to timestep
 
+		env.render()
+		time.sleep(.5)
 
 		if env.v == 'horizon' and return_zero:
 			if not took_action:
@@ -265,6 +267,7 @@ def main():
 		totalLoss.append(loss) # loss trajectory
 
 		if is_done:
+			env.close()
 			num_games+=1
 
 			if args.env == 'tokens-v3' or args.env == 'tokens-v4':
