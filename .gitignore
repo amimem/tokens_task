@@ -1,5 +1,6 @@
 /storage/
 /notebooks/*.pdf
+/notebooks/*.png
 __pycache__
 .ipynb_checkpoints/
 *.swp
