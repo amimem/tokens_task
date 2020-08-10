@@ -58,6 +58,7 @@ def main():
 	parser.add_argument('--softmax', help='use softmax exploration',action='store_true')
 	parser.add_argument('--eps_soft', help='use epsilon soft exploration',action='store_true')
 	parser.add_argument('--variation', default="horizon", help='which variation')
+	parser.add_argument('--reward', type=int, default="1", help='fixed reward')
 
 
 	args = parser.parse_args()
@@ -172,6 +173,8 @@ def main():
 	start_time = time.time()
 	totalReturns = [] # Return per episode
 	totalLoss = [] # loss trajectory
+
+	env.set_reward(args.reward)
 
 	state, game_time_step  = env.reset()
 	decisionTime = []
