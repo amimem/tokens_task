@@ -327,7 +327,7 @@ class TokensEnv(gym.Env):
 
 			for i in range(num_tokens):
 				exec(f'self.token_{i} = rendering.make_circle(token_radius, filled=True)')
-				exec(f'self.token_{i}.set_color(1.0, .27, .0)')
+				exec(f'self.token_{i}.set_color(.0, .0, .0)')
 				exec(f'self.token_{i}.add_attr(self.middle_trans)')
 				exec(f'self.token_{i}.add_attr(self.token_translates[{i}])')
 				exec(f'self.viewer.add_geom(self.token_{i})')
