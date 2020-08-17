@@ -311,16 +311,16 @@ class TokensEnv(gym.Env):
 			self.right_trans = rendering.Transform(translation = (distance_scale*radius, 0.0))
 			self.left_trans = rendering.Transform(translation = (-distance_scale*radius, 0.0))
 
-			self.middle_circle = rendering.make_circle(radius, filled=False)
+			self.middle_circle = rendering.make_circle(radius, 100, filled=False)
 			self.middle_circle.add_attr(self.middle_trans)
 			self.viewer.add_geom(self.middle_circle)
 
-			self.right_circle = rendering.make_circle(radius, filled=False)
+			self.right_circle = rendering.make_circle(radius, 100 , filled=False)
 			self.right_circle.add_attr(self.middle_trans)
 			self.right_circle.add_attr(self.right_trans)
 			self.viewer.add_geom(self.right_circle)
 
-			self.left_circle = rendering.make_circle(radius, filled=False)
+			self.left_circle = rendering.make_circle(radius, 100 , filled=False)
 			self.left_circle.add_attr(self.middle_trans)
 			self.left_circle.add_attr(self.left_trans)
 			self.viewer.add_geom(self.left_circle)
