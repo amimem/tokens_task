@@ -335,14 +335,14 @@ class TokensEnv(gym.Env):
 		if self.state is None:
 			return None
 
-		for i in range(self.counter[1]):
-			pass
-
 		for i in range(self.counter[0]):
 			exec(f'self.token_translates[{i}].set_translation(-distance_scale*radius + self.coords_list[{i}][0] ,  self.coords_list[{i}][1])')
 
-		for i in range(self.counter[2]):
+		for i in range(self.counter[0], self.counter[2] + self.counter[0]):
 			exec(f'self.token_translates[{i}].set_translation(distance_scale*radius + self.coords_list[{i}][0] , self.coords_list[{i}][1])')
+
+		for i in range(self.counter[2] + self.counter[0] , np.sum(self.counter)):
+			pass
 			
 
 		return self.viewer.render(return_rgb_array=mode == 'rgb_array')

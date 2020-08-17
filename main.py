@@ -223,7 +223,7 @@ def main():
 			eps_track.set_eps(num_frames) # otherwise it is changes timestep to timestep
 
 		env.render()
-		time.sleep(.5)
+		time.sleep(0.05)
 
 		if env.v == 'horizon' and return_zero:
 			if not took_action:
