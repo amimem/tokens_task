@@ -288,7 +288,7 @@ class TokensEnv(gym.Env):
 
 		if self.viewer is None:
 
-			self.num_range = np.arange(start = -radius + token_radius, stop=radius - token_radius + token_radius*tokens_distance_scale , step=token_radius*tokens_distance_scale)
+			self.num_range = np.arange(start = -radius + token_radius, stop = radius - token_radius , step = token_radius*tokens_distance_scale)
 			self.coords_list = []
 
 			while len(self.coords_list) < num_tokens:
