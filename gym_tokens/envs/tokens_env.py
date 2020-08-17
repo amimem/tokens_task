@@ -281,6 +281,7 @@ class TokensEnv(gym.Env):
 		screen_width = 1200
 		screen_height = 800
 		radius = 100
+		radius_scale = 1.1
 		token_radius = 4
 		distance_scale = 2.5
 		tokens_distance_scale = 3
@@ -308,19 +309,19 @@ class TokensEnv(gym.Env):
 			self.viewer = rendering.Viewer(screen_width, screen_height) # Creates a view using the specified width and height
 
 			self.middle_trans = rendering.Transform(translation = (screen_width/2, screen_height/2))
-			self.right_trans = rendering.Transform(translation = (distance_scale*radius, 0.0))
-			self.left_trans = rendering.Transform(translation = (-distance_scale*radius, 0.0))
+			self.right_trans = rendering.Transform(translation = (distance_scale*radius_scale*radius, 0.0))
+			self.left_trans = rendering.Transform(translation = (-distance_scale*radius_scale*radius, 0.0))
 
-			self.middle_circle = rendering.make_circle(radius, 100, filled=False)
+			self.middle_circle = rendering.make_circle(radius_scale*radius, 100, filled=False)
 			self.middle_circle.add_attr(self.middle_trans)
 			self.viewer.add_geom(self.middle_circle)
 
-			self.right_circle = rendering.make_circle(radius, 100 , filled=False)
+			self.right_circle = rendering.make_circle(radius_scale*radius, 100 , filled=False)
 			self.right_circle.add_attr(self.middle_trans)
 			self.right_circle.add_attr(self.right_trans)
 			self.viewer.add_geom(self.right_circle)
 
-			self.left_circle = rendering.make_circle(radius, 100 , filled=False)
+			self.left_circle = rendering.make_circle(radius_scale*radius, 100 , filled=False)
 			self.left_circle.add_attr(self.middle_trans)
 			self.left_circle.add_attr(self.left_trans)
 			self.viewer.add_geom(self.left_circle)
