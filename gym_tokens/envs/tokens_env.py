@@ -278,8 +278,8 @@ class TokensEnv(gym.Env):
 
 		# Taken from: https://github.com/openai/gym/blob/master/gym/envs/classic_control/cartpole.py
 	def render(self, mode='human', state = None):
-		screen_width = 1200
-		screen_height = 800
+		screen_width = 800
+		screen_height = 300
 		radius = 100
 		radius_scale = 1.1
 		token_radius = 4
@@ -289,7 +289,7 @@ class TokensEnv(gym.Env):
 
 		if self.viewer is None:
 
-			self.num_range = np.arange(start = -radius + token_radius, stop = radius - token_radius , step = token_radius*tokens_distance_scale)
+			self.num_range = np.arange(start = -radius + 2*token_radius, stop = radius - token_radius , step = token_radius*tokens_distance_scale)
 			self.coords_list = []
 
 			while len(self.coords_list) < num_tokens:
@@ -309,8 +309,8 @@ class TokensEnv(gym.Env):
 			self.viewer = rendering.Viewer(screen_width, screen_height) # Creates a view using the specified width and height
 
 			self.middle_trans = rendering.Transform(translation = (screen_width/2, screen_height/2))
-			self.right_trans = rendering.Transform(translation = (distance_scale*radius_scale*radius, 0.0))
-			self.left_trans = rendering.Transform(translation = (-distance_scale*radius_scale*radius, 0.0))
+			self.right_trans = rendering.Transform(translation = (distance_scale*radius, 0.0))
+			self.left_trans = rendering.Transform(translation = (-distance_scale*radius, 0.0))
 
 			self.middle_circle = rendering.make_circle(radius_scale*radius, 100, filled=False)
 			self.middle_circle.add_attr(self.middle_trans)
@@ -661,4 +661,4 @@ class TokensEnv2(gym.Env):
 		self.time_steps = 0
 		self.trajectory = [0]
 
-		return self.state, self.time_steps 
+		return self.state, self.time_steps
