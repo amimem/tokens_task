@@ -12,6 +12,7 @@ from PIL import Image
 import utils
 import datetime
 import sys
+import time
 
 import time
 import torch
@@ -107,12 +108,10 @@ def get_screen():
 	# Returned screen requested by gym is 400x600x3, but is sometimes larger
 	# such as 800x1200x3. Transpose it into torch order (CHW).
 	screen = env.render(mode='rgb_array').transpose((2, 0, 1))
-	# Cart is in the lower half, so strip off the top and bottom of the screen
 	_, screen_height, screen_width = screen.shape
 	screen = np.ascontiguousarray(screen, dtype=np.float32) / 255
 	screen = torch.from_numpy(screen)
 	# Resize, and add a batch dimension (BCHW)
-	# env.close()
 	return resize(screen).unsqueeze(0).to(device)
 
 #create train dir
@@ -158,8 +157,8 @@ if __name__ == "__main__":
 	device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
 
 	BATCH_SIZE = 128
-	GAMMA = 0.8
-	EPS_START = 0.01
+	GAMMA = 0.99
+	EPS_START = 0.1
 	EPS_END = 0.0001
 	EPS_DECAY = 10000
 	TARGET_UPDATE = 10
@@ -196,32 +195,10 @@ if __name__ == "__main__":
 				# t.max(1) will return largest column value of each row.
 				# second column on max result is index of where max element was
 				# found, so we pick action with the larger expected reward.
+				# print(policy_net(state))
 				return policy_net(state).max(1)[1].view(1, 1)
 		else:
 			return torch.tensor([[random.randrange(n_actions)]], device=device, dtype=torch.long)
-
-
-	episode_durations = []
-
-
-	# def plot_durations():
-	# 	plt.figure(2)
-	# 	plt.clf()
-	# 	durations_t = torch.tensor(episode_durations, dtype=torch.float)
-	# 	plt.title('Training...')
-	# 	plt.xlabel('Episode')
-	# 	plt.ylabel('Duration')
-	# 	plt.plot(durations_t.numpy())
-	# 	# Take 100 episode averages and plot them too
-	# 	if len(durations_t) >= 100:
-	# 		means = durations_t.unfold(0, 100, 1).mean(1).view(-1)
-	# 		means = torch.cat((torch.zeros(99), means))
-	# 		plt.plot(means.numpy())
-
-	# 	plt.pause(0.001)  # pause a bit so that plots are updated
-	# 	if is_ipython:
-	# 		display.clear_output(wait=True)
-	# 		display.display(plt.gcf())
 
 
 	def optimize_model():
@@ -237,11 +214,10 @@ if __name__ == "__main__":
 		# (a final state would've been the one after which simulation ended)
 		non_final_mask = torch.tensor(tuple(map(lambda s: s is not None,
 											batch.next_state)), device=device, dtype=torch.bool)
-		non_final_next_states = torch.cat([s for s in batch.next_state
+		non_final_next_states = torch.cat([s for s in batch.next_state if s is not None])
 		#FIXME:
 		# The batch next state is all none, how to remove none?
 		# Test it in the classical control env.
-													if s is not None])
 		state_batch = torch.cat(batch.state)
 		action_batch = torch.cat(batch.action)
 		reward_batch = torch.cat(batch.reward)
@@ -250,6 +226,7 @@ if __name__ == "__main__":
 		# columns of actions taken. These are the actions which would've been taken
 		# for each batch state according to policy_net
 		state_action_values = policy_net(state_batch).gather(1, action_batch)
+		# print(state_action_values)
 
 		# Compute V(s_{t+1}) for all next states.
 		# Expected values of actions for non_final_next_states are computed based
@@ -271,7 +248,7 @@ if __name__ == "__main__":
 			param.grad.data.clamp_(-1, 1)
 		optimizer.step()
 
-	num_episodes = 10000
+	num_episodes = 50000
 	for i_episode in range(num_episodes):
 		# Initialize the environment and state
 		env.reset()
@@ -303,9 +280,9 @@ if __name__ == "__main__":
 			# Perform one step of the optimization (on the target network)
 			optimize_model()
 			if done:
+				env.close()
 				num_episode += 1
 				traj = env.get_trajectory()
-				episode_durations.append(t + 1)
 				totalReturns.append(reward) # reward per episode
 				traj_group.append(traj)
 
