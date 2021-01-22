@@ -3,6 +3,7 @@ from gym import error, spaces, utils
 from gym.utils import seeding
 import numpy as np
 import unittest
+import time
 from gym.envs.classic_control import rendering
 
 class TokensEnv(gym.Env):
@@ -86,10 +87,10 @@ class TokensEnv(gym.Env):
 
 				if np.random.uniform() <= 0.5:
 					Nt -= 1
-					self.counter[0] += 1
+					# self.counter[0] += 1
 				else:
 					Nt += 1
-					self.counter[2] += 1
+					# self.counter[2] += 1
 
 				self.trajectory.append(Nt)
 				self.time_steps += 1
@@ -278,11 +279,12 @@ class TokensEnv(gym.Env):
 
 		# Taken from: https://github.com/openai/gym/blob/master/gym/envs/classic_control/cartpole.py
 	def render(self, mode='human', state = None):
+		# time.sleep(2)
 		screen_width = 800
 		screen_height = 300
 		radius = 100
 		radius_scale = 1.1
-		token_radius = 4
+		token_radius = 8
 		distance_scale = 2.5
 		tokens_distance_scale = 3
 		num_tokens = self.terminal
