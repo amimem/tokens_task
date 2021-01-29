@@ -21,11 +21,26 @@ import torch.optim as optim
 import torch.nn.functional as F
 import torchvision.transforms as T
 
+import argparse
+
+from torch.utils.tensorboard import SummaryWriter
+
+parser = argparse.ArgumentParser()
+parser.add_argument('--env', default="tokens-v0")
+parser.add_argument('--variation', default="terminate")
+parser.add_argument('--games', default=10000, type=int)
+parser.add_argument('--seed', default=0, type=int)
+parser.add_argument('--height', default=11, type=int)
+parser.add_argument('--gamma', default=0.99, type=float)
+args = parser.parse_args()
+
+writer = SummaryWriter(f'runs/seed_{args.seed}/')
+
 torch.manual_seed(0)
 
 Transition = namedtuple('Transition',
 						('state', 'action', 'next_state', 'reward'))
-env = gym.make("tokens-v0", alpha=0.75, seed=0, terminal=11, fancy_discount=False, v="terminate").unwrapped
+env = gym.make(args.env, alpha=0.75, seed=args.seed, terminal=args.height, fancy_discount=False, v=args.variation).unwrapped
 
 def _mapFromIndexToTrueActions(actions):
 	if actions == 1:
@@ -100,6 +115,27 @@ class DQN(nn.Module):
 		x = F.relu(self.bn3(self.conv3(x)))
 		return self.head(x.view(x.size(0), -1))
 
+class DQN2(nn.Module):
+
+	def __init__(self, h, w, outputs):
+		super(DQN2, self).__init__()
+		self.seq = nn.Sequential(
+			nn.Flatten(),
+			nn.Linear(w*h, int(w*h/2)),
+			nn.ReLU(),
+			nn.Linear(int(w*h/2),int(w*h/4)),
+			nn.ReLU(),
+			nn.Linear(int(w*h/4),outputs)
+		)
+		# self.seq = nn.Sequential(
+		# 	nn.Flatten(),
+		# 	nn.Linear(w*h, outputs),
+		# )
+
+	def forward(self, x):
+		x = self.seq(x)
+		return x
+
 resize = T.Compose([T.ToPILImage(),
 					T.Resize(40, interpolation=Image.CUBIC),
 					T.ToTensor()])
@@ -110,9 +146,11 @@ def get_screen():
 	screen = env.render(mode='rgb_array').transpose((2, 0, 1))
 	_, screen_height, screen_width = screen.shape
 	screen = np.ascontiguousarray(screen, dtype=np.float32) / 255
+	screen = screen[0]
 	screen = torch.from_numpy(screen)
 	# Resize, and add a batch dimension (BCHW)
-	return resize(screen).unsqueeze(0).to(device)
+	# return resize(screen).unsqueeze(0).to(device)
+	return resize(screen).to(device)
 
 #create train dir
 date = datetime.datetime.now().strftime("%y-%m-%d-%H-%M-%S")
@@ -156,8 +194,8 @@ if __name__ == "__main__":
 	# if gpu is to be used
 	device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
 
-	BATCH_SIZE = 128
-	GAMMA = 0.99
+	BATCH_SIZE = 32
+	GAMMA = args.gamma
 	EPS_START = 0.1
 	EPS_END = 0.0001
 	EPS_DECAY = 10000
@@ -167,14 +205,14 @@ if __name__ == "__main__":
 	# returned from AI gym. Typical dimensions at this point are close to 3x40x90
 	# which is the result of a clamped and down-scaled render buffer in get_screen()
 	init_screen = get_screen()
-	_, _, screen_height, screen_width = init_screen.shape
+	_, screen_height, screen_width = init_screen.shape
 	print(init_screen.shape)
 
 	# Get number of actions from gym action space
 	n_actions = env.action_space.n
 
-	policy_net = DQN(screen_height, screen_width, n_actions).to(device)
-	target_net = DQN(screen_height, screen_width, n_actions).to(device)
+	policy_net = DQN2(screen_height, screen_width, n_actions).to(device)
+	target_net = DQN2(screen_height, screen_width, n_actions).to(device)
 	target_net.load_state_dict(policy_net.state_dict())
 	target_net.eval()
 
@@ -214,7 +252,11 @@ if __name__ == "__main__":
 		# (a final state would've been the one after which simulation ended)
 		non_final_mask = torch.tensor(tuple(map(lambda s: s is not None,
 											batch.next_state)), device=device, dtype=torch.bool)
-		non_final_next_states = torch.cat([s for s in batch.next_state if s is not None])
+		try :
+			non_final_next_states = torch.cat([s for s in batch.next_state if s is not None])
+		except:
+			non_final_next_states = []
+
 		#FIXME:
 		# The batch next state is all none, how to remove none?
 		# Test it in the classical control env.
@@ -248,7 +290,15 @@ if __name__ == "__main__":
 			param.grad.data.clamp_(-1, 1)
 		optimizer.step()
 
-	num_episodes = 50000
+		return loss
+
+	num_episodes = args.games
+	embedding_counter = 0
+	
+	sample = get_screen() - get_screen()
+	writer.add_graph(policy_net, sample)
+	writer.close()
+
 	for i_episode in range(num_episodes):
 		# Initialize the environment and state
 		env.reset()
@@ -257,7 +307,9 @@ if __name__ == "__main__":
 		state = current_screen - last_screen
 
 		for t in count():
+			embedding_counter += 1
 			# Select and perform an action
+			# time.sleep(1)
 			action = select_action(state)
 			nstate, reward, done, _ = env.step(_mapFromIndexToTrueActions(action.item()))
 			reward = torch.tensor([reward], device=device)
@@ -267,6 +319,8 @@ if __name__ == "__main__":
 			current_screen = get_screen()
 			if not done:
 				next_state = current_screen - last_screen
+				writer.add_embedding(next_state.reshape(1,-1), global_step=embedding_counter)
+				writer.close()
 			else:
 				next_state = None
 
@@ -278,7 +332,12 @@ if __name__ == "__main__":
 				state = next_state
 
 			# Perform one step of the optimization (on the target network)
-			optimize_model()
+			loss = optimize_model()
+
+			if loss is not None:
+				writer.add_scalar('loss',loss)
+				writer.close()
+
 			if done:
 				env.close()
 				num_episode += 1
@@ -317,6 +376,10 @@ if __name__ == "__main__":
 
 		# duration = int(time.time() - start_time)
 		totalReturn_val = np.sum(totalReturns) # sum of all episodic returns
+
+		writer.add_scalars('rewards', {'raw': totalReturns[-1], 
+										'mean_reward': np.mean(totalReturns)})
+		writer.close()
 
 		avg_returns = np.mean(totalReturns[-1000:])
 		recent_correct = np.mean(numRecentCorrectChoice[-1000:])
