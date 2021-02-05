@@ -45,6 +45,7 @@ writer = SummaryWriter(f'runs/games_{args.games}/batch_{args.batch_size}/seed_{a
 
 torch.manual_seed(0)
 np.random.seed(0)
+random.seed(0)
 
 Transition = namedtuple('Transition',
 						('state', 'action', 'next_state', 'reward'))
@@ -232,6 +233,7 @@ if __name__ == "__main__":
 		global steps_done
 		sample = random.random()
 		eps_threshold = EPS_END + (EPS_START - EPS_END) * math.exp(-1. * steps_done / EPS_DECAY)
+		eps = max(EPS_START - steps_done / EPS_DECAY, EPS_END)
 		steps_done += 1
 		if sample > eps_threshold:
 			with torch.no_grad():
@@ -241,7 +243,10 @@ if __name__ == "__main__":
 				# print(policy_net(state))
 				return policy_net(state).max(1)[1].view(1, 1)
 		else:
-			return torch.tensor([[random.randrange(n_actions)]], device=device, dtype=torch.long)
+			wait_prob = 1/3 + 2/3 * (eps/EPS_START)
+			lr_prob = 1/3 - 1/3 * (eps/EPS_START)
+			a = np.random.choice(n_actions, size=1, p=[wait_prob, lr_prob, lr_prob])
+			return torch.tensor([a], device=device, dtype=torch.long)
 
 
 	def optimize_model():
