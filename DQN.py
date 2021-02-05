@@ -23,6 +23,12 @@ import torchvision.transforms as T
 
 import argparse
 
+
+import tensorflow as tf
+import tensorboard as tb
+tf.io.gfile = tb.compat.tensorflow_stub.io.gfile
+
+
 from torch.utils.tensorboard import SummaryWriter
 
 parser = argparse.ArgumentParser()
@@ -30,13 +36,15 @@ parser.add_argument('--env', default="tokens-v0")
 parser.add_argument('--variation', default="terminate")
 parser.add_argument('--games', default=10000, type=int)
 parser.add_argument('--seed', default=0, type=int)
+parser.add_argument('--batch_size', default=32, type=int)
 parser.add_argument('--height', default=11, type=int)
 parser.add_argument('--gamma', default=0.99, type=float)
 args = parser.parse_args()
 
-writer = SummaryWriter(f'runs/seed_{args.seed}/')
+writer = SummaryWriter(f'runs/games_{args.games}/batch_{args.batch_size}/seed_{args.seed}/time_{int(time.time())}')
 
 torch.manual_seed(0)
+np.random.seed(0)
 
 Transition = namedtuple('Transition',
 						('state', 'action', 'next_state', 'reward'))
@@ -91,19 +99,17 @@ class DQN(nn.Module):
 
 	def __init__(self, h, w, outputs):
 		super(DQN, self).__init__()
-		self.conv1 = nn.Conv2d(3, 16, kernel_size=5, stride=2)
+		self.conv1 = nn.Conv2d(1, 16, kernel_size=5, stride=2)
 		self.bn1 = nn.BatchNorm2d(16)
 		self.conv2 = nn.Conv2d(16, 32, kernel_size=5, stride=2)
 		self.bn2 = nn.BatchNorm2d(32)
-		self.conv3 = nn.Conv2d(32, 32, kernel_size=5, stride=2)
-		self.bn3 = nn.BatchNorm2d(32)
 
 		# Number of Linear input connections depends on output of conv2d layers
 		# and therefore the input image size, so compute it.
 		def conv2d_size_out(size, kernel_size = 5, stride = 2):
 			return (size - (kernel_size - 1) - 1) // stride  + 1
-		convw = conv2d_size_out(conv2d_size_out(conv2d_size_out(w)))
-		convh = conv2d_size_out(conv2d_size_out(conv2d_size_out(h)))
+		convw = conv2d_size_out(conv2d_size_out(w))
+		convh = conv2d_size_out(conv2d_size_out(h))
 		linear_input_size = convw * convh * 32
 		self.head = nn.Linear(linear_input_size, outputs)
 
@@ -112,7 +118,6 @@ class DQN(nn.Module):
 	def forward(self, x):
 		x = F.relu(self.bn1(self.conv1(x)))
 		x = F.relu(self.bn2(self.conv2(x)))
-		x = F.relu(self.bn3(self.conv3(x)))
 		return self.head(x.view(x.size(0), -1))
 
 class DQN2(nn.Module):
@@ -149,8 +154,8 @@ def get_screen():
 	screen = screen[0]
 	screen = torch.from_numpy(screen)
 	# Resize, and add a batch dimension (BCHW)
-	# return resize(screen).unsqueeze(0).to(device)
-	return resize(screen).to(device)
+	return resize(screen).unsqueeze(0).to(device)
+	# return resize(screen).to(device)
 
 #create train dir
 date = datetime.datetime.now().strftime("%y-%m-%d-%H-%M-%S")
@@ -194,7 +199,7 @@ if __name__ == "__main__":
 	# if gpu is to be used
 	device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
 
-	BATCH_SIZE = 32
+	BATCH_SIZE = args.batch_size
 	GAMMA = args.gamma
 	EPS_START = 0.1
 	EPS_END = 0.0001
@@ -205,14 +210,14 @@ if __name__ == "__main__":
 	# returned from AI gym. Typical dimensions at this point are close to 3x40x90
 	# which is the result of a clamped and down-scaled render buffer in get_screen()
 	init_screen = get_screen()
-	_, screen_height, screen_width = init_screen.shape
+	_ , _, screen_height, screen_width = init_screen.shape
 	print(init_screen.shape)
 
 	# Get number of actions from gym action space
 	n_actions = env.action_space.n
 
-	policy_net = DQN2(screen_height, screen_width, n_actions).to(device)
-	target_net = DQN2(screen_height, screen_width, n_actions).to(device)
+	policy_net = DQN(screen_height, screen_width, n_actions).to(device)
+	target_net = DQN(screen_height, screen_width, n_actions).to(device)
 	target_net.load_state_dict(policy_net.state_dict())
 	target_net.eval()
 
@@ -276,7 +281,11 @@ if __name__ == "__main__":
 		# This is merged based on the mask, such that we'll have either the expected
 		# state value or 0 in case the state was final.
 		next_state_values = torch.zeros(BATCH_SIZE, device=device)
-		next_state_values[non_final_mask] = target_net(non_final_next_states).max(1)[0].detach()
+		try:
+			next_state_values[non_final_mask] = target_net(non_final_next_states).max(1)[0].detach()
+		except:
+			pass
+
 		# Compute the expected Q values
 		expected_state_action_values = (next_state_values * GAMMA) + reward_batch
 
@@ -295,7 +304,7 @@ if __name__ == "__main__":
 	num_episodes = args.games
 	embedding_counter = 0
 	
-	sample = get_screen() - get_screen()
+	sample = get_screen()
 	writer.add_graph(policy_net, sample)
 	writer.close()
 
@@ -304,7 +313,7 @@ if __name__ == "__main__":
 		env.reset()
 		last_screen = get_screen()
 		current_screen = get_screen()
-		state = current_screen - last_screen
+		state = current_screen
 
 		for t in count():
 			embedding_counter += 1
@@ -318,8 +327,8 @@ if __name__ == "__main__":
 			last_screen = current_screen
 			current_screen = get_screen()
 			if not done:
-				next_state = current_screen - last_screen
-				writer.add_embedding(next_state.reshape(1,-1), global_step=embedding_counter)
+				next_state = current_screen
+				writer.add_embedding(next_state.flatten(start_dim=1), global_step=embedding_counter)
 				writer.close()
 			else:
 				next_state = None
@@ -377,8 +386,7 @@ if __name__ == "__main__":
 		# duration = int(time.time() - start_time)
 		totalReturn_val = np.sum(totalReturns) # sum of all episodic returns
 
-		writer.add_scalars('rewards', {'raw': totalReturns[-1], 
-										'mean_reward': np.mean(totalReturns)})
+		writer.add_scalar('mean_reward',np.mean(totalReturns),i_episode)
 		writer.close()
 
 		avg_returns = np.mean(totalReturns[-1000:])
