@@ -22,8 +22,7 @@ import torch.nn.functional as F
 import torchvision.transforms as T
 
 import argparse
-
-
+import os
 import tensorflow as tf
 import tensorboard as tb
 tf.io.gfile = tb.compat.tensorflow_stub.io.gfile
@@ -39,9 +38,11 @@ parser.add_argument('--seed', default=0, type=int)
 parser.add_argument('--batch_size', default=32, type=int)
 parser.add_argument('--height', default=11, type=int)
 parser.add_argument('--gamma', default=0.99, type=float)
+parser.add_argument('--path', default="/")
+
 args = parser.parse_args()
 
-writer = SummaryWriter(f'runs/games_{args.games}/batch_{args.batch_size}/seed_{args.seed}/time_{int(time.time())}')
+writer = SummaryWriter(f'{args.path}/runs/games_{args.games}/batch_{args.batch_size}/seed_{args.seed}/time_{int(time.time())}')
 
 torch.manual_seed(0)
 np.random.seed(0)
@@ -164,6 +165,7 @@ default_model_name = f"{'Tokens0'}_{'reinforce'}_seed{'0'}_{date}"
 
 model_name = default_model_name
 model_dir = utils.get_model_dir(model_name)
+model_dir = os.path.join(args.path, model_dir)
 
 txt_logger = utils.get_txt_logger(model_dir)
 csv_file, csv_logger = utils.get_csv_logger(model_dir)
@@ -202,7 +204,7 @@ if __name__ == "__main__":
 
 	BATCH_SIZE = args.batch_size
 	GAMMA = args.gamma
-	EPS_START = 0.1
+	EPS_START = 1
 	EPS_END = 0.0001
 	EPS_DECAY = 10000
 	TARGET_UPDATE = 10
