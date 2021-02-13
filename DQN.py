@@ -193,11 +193,11 @@ if __name__ == "__main__":
 	decisionTime = np.zeros(shape=((height*2)+1)) # histogram of decision times per episode
 
 	# set up matplotlib
-	is_ipython = 'inline' in matplotlib.get_backend()
-	if is_ipython:
-		from IPython import display
+	# is_ipython = 'inline' in matplotlib.get_backend()
+	# if is_ipython:
+	# 	from IPython import display
 
-	plt.ion()
+	# plt.ion()
 
 	# if gpu is to be used
 	device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
@@ -428,6 +428,6 @@ if __name__ == "__main__":
 	print('Complete')
 	env.render()
 	env.close()
-	plt.ioff()
-	plt.show()
-	plt.savefig("plotdur.png")
+	# plt.ioff()
+	# plt.show()
+	# plt.savefig("plotdur.png")
