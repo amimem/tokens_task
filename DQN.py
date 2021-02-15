@@ -328,7 +328,7 @@ if __name__ == "__main__":
 			# time.sleep(1)
 			action = select_action(state)
 			nstate, reward, done, _ = env.step(_mapFromIndexToTrueActions(action.item()))
-			reward = torch.tensor([reward], device=device)
+			rewardT = torch.tensor([reward], device=device)
 
 			# Observe new state
 			last_screen = current_screen
@@ -341,7 +341,7 @@ if __name__ == "__main__":
 				next_state = None
 
 			# Store the transition in memory
-			memory.push(state, action, next_state, reward)
+			memory.push(state, action, next_state, rewardT)
 
 			if not done:
 				# Move to the next state
@@ -380,7 +380,7 @@ if __name__ == "__main__":
 				if env_name == 'tokens-v3' or env_name == 'tokens-v4':
 					finalRewardPerGame.append(env.reward)
 				else:
-					finalRewardPerGame.append(reward.item())
+					finalRewardPerGame.append(reward)
 				# plot_durations()
 				break
 
