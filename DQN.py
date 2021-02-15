@@ -48,6 +48,9 @@ torch.manual_seed(0)
 np.random.seed(0)
 random.seed(0)
 
+# if gpu is to be used
+device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
+
 Transition = namedtuple('Transition',
 						('state', 'action', 'next_state', 'reward'))
 env = gym.make(args.env, alpha=0.75, seed=args.seed, terminal=args.height, fancy_discount=False, v=args.variation).unwrapped
@@ -198,9 +201,6 @@ if __name__ == "__main__":
 	# 	from IPython import display
 
 	# plt.ion()
-
-	# if gpu is to be used
-	device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
 
 	BATCH_SIZE = args.batch_size
 	GAMMA = args.gamma
