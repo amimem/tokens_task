@@ -39,6 +39,7 @@ parser.add_argument('--batch_size', default=32, type=int)
 parser.add_argument('--height', default=11, type=int)
 parser.add_argument('--gamma', default=0.99, type=float)
 parser.add_argument('--path', default="/")
+parser.add_argument('--network_name', default="cnn-2layer")
 
 args = parser.parse_args()
 
@@ -102,34 +103,56 @@ class ReplayMemory(object):
 
 class DQN(nn.Module):
 
-	def __init__(self, h, w, outputs):
+	def __init__(self, h, w, outputs, name):
 		super(DQN, self).__init__()
-		self.conv1 = nn.Conv2d(1, 16, kernel_size=5, stride=2)
-		self.bn1 = nn.BatchNorm2d(16)
-		self.conv2 = nn.Conv2d(16, 32, kernel_size=5, stride=2)
-		self.bn2 = nn.BatchNorm2d(32)
+		self.name = name
 
-		# Number of Linear input connections depends on output of conv2d layers
-		# and therefore the input image size, so compute it.
-		def conv2d_size_out(size, kernel_size = 5, stride = 2):
-			return (size - (kernel_size - 1) - 1) // stride  + 1
-		convw = conv2d_size_out(conv2d_size_out(w))
-		convh = conv2d_size_out(conv2d_size_out(h))
-		linear_input_size = convw * convh * 32
-		self.head = nn.Linear(linear_input_size, outputs)
+		if name == 'cnn-1layer':
+			self.conv1 = nn.Conv2d(1, 16, kernel_size=5, stride=2)
+			self.bn1 = nn.BatchNorm2d(16)
 
-	# Called with either one element to determine next action, or a batch
-	# during optimization. Returns tensor([[left0exp,right0exp]...]).
-	def forward(self, x):
-		x = F.relu(self.bn1(self.conv1(x)))
-		x = F.relu(self.bn2(self.conv2(x)))
-		return self.head(x.view(x.size(0), -1))
+			# Number of Linear input connections depends on output of conv2d layers
+			# and therefore the input image size, so compute it.
+			def conv2d_size_out(size, kernel_size = 5, stride = 2):
+				return (size - (kernel_size - 1) - 1) // stride  + 1
+			convw = conv2d_size_out(w)
+			convh = conv2d_size_out(h)
+			linear_input_size = convw * convh * 16
+			self.head = nn.Linear(linear_input_size, outputs)
 
-class DQN2(nn.Module):
+		elif name == 'cnn-2layer':
+			self.conv1 = nn.Conv2d(1, 16, kernel_size=5, stride=2)
+			self.bn1 = nn.BatchNorm2d(16)
+			self.conv2 = nn.Conv2d(16, 32, kernel_size=5, stride=2)
+			self.bn2 = nn.BatchNorm2d(32)
 
-	def __init__(self, h, w, outputs):
-		super(DQN2, self).__init__()
-		self.seq = nn.Sequential(
+			# Number of Linear input connections depends on output of conv2d layers
+			# and therefore the input image size, so compute it.
+			def conv2d_size_out(size, kernel_size = 5, stride = 2):
+				return (size - (kernel_size - 1) - 1) // stride  + 1
+			convw = conv2d_size_out(conv2d_size_out(w))
+			convh = conv2d_size_out(conv2d_size_out(h))
+			linear_input_size = convw * convh * 32
+			self.head = nn.Linear(linear_input_size, outputs)
+
+		elif name == 'cnn-3layer':
+			self.conv1 = nn.Conv2d(1, 16, kernel_size=5, stride=2)
+			self.bn1 = nn.BatchNorm2d(16)
+			self.conv2 = nn.Conv2d(16, 32, kernel_size=5, stride=2)
+			self.bn2 = nn.BatchNorm2d(32)
+			self.conv3 = nn.Conv2d(32, 32, kernel_size=5, stride=2)
+			self.bn3 = nn.BatchNorm2d(32)
+			# Number of Linear input connections depends on output of conv2d layers
+			# and therefore the input image size, so compute it.
+			def conv2d_size_out(size, kernel_size = 5, stride = 2):
+				return (size - (kernel_size - 1) - 1) // stride  + 1
+			convw = conv2d_size_out(conv2d_size_out(conv2d_size_out(w)))
+			convh = conv2d_size_out(conv2d_size_out(conv2d_size_out(h)))
+			linear_input_size = convw * convh * 32
+			self.head = nn.Linear(linear_input_size, outputs)
+
+		elif name == 'ffnn-3layer':
+			self.seq = nn.Sequential(
 			nn.Flatten(),
 			nn.Linear(w*h, int(w*h/2)),
 			nn.ReLU(),
@@ -137,14 +160,39 @@ class DQN2(nn.Module):
 			nn.ReLU(),
 			nn.Linear(int(w*h/4),outputs)
 		)
-		# self.seq = nn.Sequential(
-		# 	nn.Flatten(),
-		# 	nn.Linear(w*h, outputs),
-		# )
 
+		elif name == 'ffnn-2layer':
+			self.seq = nn.Sequential(
+			nn.Flatten(),
+			nn.Linear(w*h, int(w*h/2)),
+			nn.ReLU(),
+			nn.Linear(int(w*h/2),outputs)
+		)
+
+		elif name == 'ffnn-1layer':
+			self.seq = nn.Sequential(
+				nn.Flatten(),
+				nn.Linear(w*h, outputs),
+			)
+
+	# Called with either one element to determine next action, or a batch
+	# during optimization. Returns tensor([[left0exp,right0exp]...]).
 	def forward(self, x):
-		x = self.seq(x)
-		return x
+		if self.name == 'cnn-1layer':
+			x = F.relu(self.bn1(self.conv1(x)))
+			return self.head(x.view(x.size(0), -1))
+		elif self.name == 'cnn-2layer':
+			x = F.relu(self.bn1(self.conv1(x)))
+			x = F.relu(self.bn2(self.conv2(x)))
+			return self.head(x.view(x.size(0), -1))
+		elif self.name == 'cnn-3layer':
+			x = F.relu(self.bn1(self.conv1(x)))
+			x = F.relu(self.bn2(self.conv2(x)))
+			x = F.relu(self.bn3(self.conv3(x)))
+			return self.head(x.view(x.size(0), -1))
+		elif self.name == 'ffnn-3layer' or self.name == 'ffnn-2layer' or self.name == 'ffnn-1layer':
+			x = self.seq(x)
+			return x
 
 resize = T.Compose([T.ToPILImage(),
 					T.Resize(40, interpolation=Image.CUBIC),
@@ -219,8 +267,8 @@ if __name__ == "__main__":
 	# Get number of actions from gym action space
 	n_actions = env.action_space.n
 
-	policy_net = DQN(screen_height, screen_width, n_actions).to(device)
-	target_net = DQN(screen_height, screen_width, n_actions).to(device)
+	policy_net = DQN(screen_height, screen_width, n_actions, args.network_name).to(device)
+	target_net = DQN(screen_height, screen_width, n_actions, args.network_name).to(device)
 	target_net.load_state_dict(policy_net.state_dict())
 	target_net.eval()
 
