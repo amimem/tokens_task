@@ -223,6 +223,7 @@ model_dir = os.path.join(args.path, model_dir)
 
 txt_logger = utils.get_txt_logger(model_dir)
 csv_file, csv_logger = utils.get_csv_logger(model_dir)
+loss_file, loss_logger = utils.get_loss_logger(model_dir)
 
 # Log command and all script arguments
 
@@ -366,6 +367,9 @@ if __name__ == "__main__":
 	writer.add_graph(policy_net, sample)
 	writer.close()
 
+
+	loss_logger.writerow(["loss"])
+
 	for i_episode in range(num_episodes):
 		# Initialize the environment and state
 		env.reset()
@@ -402,6 +406,8 @@ if __name__ == "__main__":
 			loss = optimize_model()
 
 			if loss is not None:
+				loss_logger.writerow([loss.item()])
+				loss_file.flush()
 				writer.add_scalar('loss',loss)
 				writer.close()
 
