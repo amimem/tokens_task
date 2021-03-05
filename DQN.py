@@ -228,7 +228,7 @@ txt_logger.info("{}\n".format(" ".join(sys.argv)))
 
 if __name__ == "__main__":
 
-	height = 11
+	height = args.height
 	num_episode = 0
 	episode_returns = []
 	numRecentCorrectChoice = []
