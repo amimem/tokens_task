@@ -40,14 +40,17 @@ parser.add_argument('--height', default=11, type=int)
 parser.add_argument('--gamma', default=0.99, type=float)
 parser.add_argument('--path', default="/")
 parser.add_argument('--network_name', default="cnn-2layer")
+parser.add_argument('--eps_start', default=1, type=int)
+parser.add_argument('--eps_end', default=0.0001, type=int)
+parser.add_argument('--eps_decay', default=10000, type=int)
 
 args = parser.parse_args()
 
-writer = SummaryWriter(f'{args.path}/runs/games_{args.games}/batch_{args.batch_size}/seed_{args.seed}/time_{int(time.time())}')
+writer = SummaryWriter(f'{args.path}/runs/games_{args.games}/batch_{args.batch_size}/seed_{args.seed}/_time_{int(time.time())}')
 
-torch.manual_seed(0)
-np.random.seed(0)
-random.seed(0)
+torch.manual_seed(args.seed)
+np.random.seed(args.seed)
+random.seed(args.seed)
 
 # if gpu is to be used
 device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
@@ -252,9 +255,9 @@ if __name__ == "__main__":
 
 	BATCH_SIZE = args.batch_size
 	GAMMA = args.gamma
-	EPS_START = 1
-	EPS_END = 0.0001
-	EPS_DECAY = 10000
+	EPS_START = args.eps_start
+	EPS_END = args.eps_end
+	EPS_DECAY = args.eps_decay
 	TARGET_UPDATE = 10
 
 	# Get screen size so that we can initialize layers correctly based on shape
@@ -476,6 +479,3 @@ if __name__ == "__main__":
 	print('Complete')
 	env.render()
 	env.close()
-	# plt.ioff()
-	# plt.show()
-	# plt.savefig("plotdur.png")
