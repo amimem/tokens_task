@@ -40,7 +40,7 @@ parser.add_argument('--height', default=11, type=int)
 parser.add_argument('--gamma', default=0.99, type=float)
 parser.add_argument('--path', default="/")
 parser.add_argument('--network_name', default="cnn-2layer")
-parser.add_argument('--eps_start', default=1, type=int)
+parser.add_argument('--eps_start', default=1, type=float)
 parser.add_argument('--eps_end', default=0.0001, type=float)
 parser.add_argument('--eps_decay', default=10000, type=int)
 
