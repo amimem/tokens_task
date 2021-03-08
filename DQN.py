@@ -23,12 +23,8 @@ import torchvision.transforms as T
 
 import argparse
 import os
-import tensorflow as tf
-import tensorboard as tb
-tf.io.gfile = tb.compat.tensorflow_stub.io.gfile
 
 
-from torch.utils.tensorboard import SummaryWriter
 
 parser = argparse.ArgumentParser()
 parser.add_argument('--env', default="tokens-v0")
@@ -45,8 +41,6 @@ parser.add_argument('--eps_end', default=0.0001, type=float)
 parser.add_argument('--eps_decay', default=10000, type=int)
 
 args = parser.parse_args()
-
-writer = SummaryWriter(f'{args.path}/runs/games_{args.games}/batch_{args.batch_size}/seed_{args.seed}/_time_{int(time.time())}')
 
 torch.manual_seed(args.seed)
 np.random.seed(args.seed)
@@ -364,8 +358,6 @@ if __name__ == "__main__":
 	embedding_counter = 0
 	
 	sample = get_screen()
-	writer.add_graph(policy_net, sample)
-	writer.close()
 
 
 	loss_logger.writerow(["loss"])
@@ -390,8 +382,6 @@ if __name__ == "__main__":
 			current_screen = get_screen()
 			if not done:
 				next_state = current_screen
-				writer.add_embedding(next_state.flatten(start_dim=1), global_step=embedding_counter)
-				writer.close()
 			else:
 				next_state = None
 
@@ -408,8 +398,6 @@ if __name__ == "__main__":
 			if loss is not None:
 				loss_logger.writerow([loss.item()])
 				loss_file.flush()
-				writer.add_scalar('loss',loss)
-				writer.close()
 
 			if done:
 				env.close()
@@ -450,8 +438,6 @@ if __name__ == "__main__":
 		# duration = int(time.time() - start_time)
 		totalReturn_val = np.sum(totalReturns) # sum of all episodic returns
 
-		writer.add_scalar('mean_reward',np.mean(totalReturns),i_episode)
-		writer.close()
 
 		avg_returns = np.mean(totalReturns[-1000:])
 		recent_correct = np.mean(numRecentCorrectChoice[-1000:])
