@@ -231,13 +231,7 @@ if __name__ == "__main__":
 	episode_returns = []
 	numRecentCorrectChoice = []
 	totalReturns = [] # Return per episode
-	choice_made = []
-	correct_choice = []
-	finalDecisionTime = []
-	finalRewardPerGame = []
-	traj_group = []
 	env_name = 'tokens-v0'
-	numCorrectChoice = 0
 	last_choice = 0
 	decisionTime = np.zeros(shape=((height*2)+1)) # histogram of decision times per episode
 
@@ -363,6 +357,10 @@ if __name__ == "__main__":
 	loss_logger.writerow(["loss"])
 
 	for i_episode in range(num_episodes):
+		choice_made = 0
+		correct_choice = 0
+		finalDecisionTime = 0
+		finalRewardPerGame = 0
 		# Initialize the environment and state
 		env.reset()
 		last_screen = get_screen()
@@ -402,15 +400,17 @@ if __name__ == "__main__":
 			if done:
 				env.close()
 				num_episode += 1
-				traj = env.get_trajectory()
-				totalReturns.append(reward) # reward per episode
-				traj_group.append(traj)
+
+				if not (i_episode < 1000):
+					totalReturns.pop(0)
+					numRecentCorrectChoice.pop(0)
 
 				if reward > 0:
-					numCorrectChoice += 1
 					numRecentCorrectChoice.append(1)
 				else:
 					numRecentCorrectChoice.append(0) # binary value, correct choice or not per episode
+
+				totalReturns.append(reward)
 
 				decision_step = _augState(abs(nstate[1])) # taking abs means that decision step is always between 15 and 31
 				decisionTime[decision_step-1] += 1 # after each episode is done, one is added to the corresponding element in decision time,
@@ -419,13 +419,12 @@ if __name__ == "__main__":
 				if abs(nstate[1]) == 0: # if we made no decision till the end
 					last_choice += 1 # last choice represents the number of episodes in which we waited until the end
 				
-				choice_made.append(_sign(nstate[1])) # these arays are updated after each episode, not after each timestep
-				correct_choice.append(_sign(traj[-1]))
-				finalDecisionTime.append(abs(nstate[1])) # Why next_state? because it is the latest state that we have and we don't update state until after the if-else condition
+				choice_made = _sign(nstate[1]) # these arays are updated after each episode, not after each timestep
+				finalDecisionTime = abs(nstate[1]) # Why next_state? because it is the latest state that we have and we don't update state until after the if-else condition
 				if env_name == 'tokens-v3' or env_name == 'tokens-v4':
-					finalRewardPerGame.append(env.reward)
+					finalRewardPerGame = env.reward
 				else:
-					finalRewardPerGame.append(reward)
+					finalRewardPerGame = reward
 				# plot_durations()
 				break
 
@@ -436,24 +435,24 @@ if __name__ == "__main__":
 		# if num_episodes % 10 == 0: # if the game has not stpped and we moved an episode forward
 
 		# duration = int(time.time() - start_time)
-		totalReturn_val = np.sum(totalReturns) # sum of all episodic returns
 
-
-		avg_returns = np.mean(totalReturns[-1000:])
-		recent_correct = np.mean(numRecentCorrectChoice[-1000:])
+		avg_returns = np.mean(totalReturns)
+		recent_correct = np.mean(numRecentCorrectChoice)
+		trajectory = env.get_trajectory()
+		correct_choice = _sign(trajectory[-1])
 
 		header = ["Game"]
 		data = [num_episode] # update and num_frames are +=15 ed
 
-		header += ["Returns", "Avg Returns", "Correct Percentage", "Recent Correct", "decision_time"]
-		data += [totalReturn_val.item(), avg_returns.item(), numCorrectChoice/num_episode, recent_correct, finalDecisionTime[num_episode-1]]
+		header += ["Avg Returns", "Recent Correct", "decision_time"]
+		data += [avg_returns.item(), recent_correct, finalDecisionTime]
 
 		txt_logger.info(
-			"G {} | R {:.3f} | Avg R {:.3f} | Avg C {:.3f} | Rec C {:.3f} | DT {}"
+			"G {} | Avg R {:.3f} | Rec C {:.3f} | DT {}"
 			.format(*data))
 
-		csv_header = ["trajectory", "choice_made", "correct_choice", "decision_time", "reward_received"]
-		csv_data = [traj_group[num_episode-1], choice_made[num_episode-1], correct_choice[num_episode-1], finalDecisionTime[num_episode-1], finalRewardPerGame[num_episode-1]]
+		csv_header = ["trajectory", "choice_made", "correct_choice", "decision_time"]
+		csv_data = [trajectory, choice_made, correct_choice, finalDecisionTime]
 
 		if num_episode == 1:
 			csv_logger.writerow(csv_header)
