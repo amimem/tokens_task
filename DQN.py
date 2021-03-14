@@ -208,8 +208,8 @@ def get_screen():
 	# return resize(screen).to(device)
 
 #create train dir
-date = datetime.datetime.now().strftime("%y-%m-%d-%H-%M-%S")
-default_model_name = f"{'Tokens0'}_{'reinforce'}_seed{'0'}_{date}"
+# date = datetime.datetime.now().strftime("%y-%m-%d-%H-%M-%S")
+default_model_name = f"{args.batch_size}_{args.gamma}_{args.eps_start}_{args.network_name}_{args.seed}"
 
 model_name = default_model_name
 model_dir = utils.get_model_dir(model_name)
