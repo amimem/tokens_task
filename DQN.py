@@ -228,7 +228,6 @@ txt_logger.info("{}\n".format(" ".join(sys.argv)))
 if __name__ == "__main__":
 
 	height = args.height
-	num_episode = 0
 	episode_returns = []
 	numRecentCorrectChoice = []
 	totalReturns = [] # Return per episode
@@ -403,7 +402,6 @@ if __name__ == "__main__":
 
 			if done:
 				env.close()
-				num_episode += 1
 				traj = env.get_trajectory()
 				totalReturns.append(reward) # reward per episode
 				traj_group.append(traj)
@@ -448,7 +446,7 @@ if __name__ == "__main__":
 		data = [i_episode] # update and num_frames are +=15 ed
 
 		header += ["Returns", "Avg Returns", "Correct Percentage", "Recent Correct", "decision_time"]
-		data += [totalReturn_val.item(), avg_returns.item(), numCorrectChoice/num_episode, recent_correct, finalDecisionTime[num_episode-1]]
+		data += [totalReturn_val.item(), avg_returns.item(), numCorrectChoice/(i_episode+1), recent_correct, finalDecisionTime[i_episode]]
 
 		txt_logger.info(
 			"G {} | R {:.3f} | Avg R {:.3f} | Avg C {:.3f} | Rec C {:.3f} | DT {}"
