@@ -39,6 +39,7 @@ parser.add_argument('--network_name', default="cnn-2layer")
 parser.add_argument('--eps_start', default=1, type=float)
 parser.add_argument('--eps_end', default=0.0001, type=float)
 parser.add_argument('--eps_decay', default=10000, type=int)
+parser.add_argument('--memory', default=10000, type=int)
 
 args = parser.parse_args()
 
@@ -272,7 +273,7 @@ if __name__ == "__main__":
 	target_net.eval()
 
 	optimizer = optim.RMSprop(policy_net.parameters())
-	memory = ReplayMemory(10000)
+	memory = ReplayMemory(args.memory)
 
 
 	steps_done = 0
