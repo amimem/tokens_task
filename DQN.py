@@ -208,8 +208,8 @@ def get_screen():
 	# return resize(screen).to(device)
 
 #create train dir
-# date = datetime.datetime.now().strftime("%y-%m-%d-%H-%M-%S")
-default_model_name = f"{args.batch_size}_{args.gamma}_{args.eps_start}_{args.network_name}_{args.seed}"
+date = datetime.datetime.now().strftime("%y-%m-%d-%H-%M-%S")
+default_model_name = f"{args.batch_size}_{args.gamma}_{args.eps_start}_{args.network_name}_{args.seed}_{date}"
 
 model_name = default_model_name
 model_dir = utils.get_model_dir(model_name)
@@ -399,7 +399,6 @@ if __name__ == "__main__":
 
 			if done:
 				env.close()
-				num_episode += 1
 
 				if not (i_episode < 1000):
 					totalReturns.pop(0)
@@ -442,7 +441,7 @@ if __name__ == "__main__":
 		correct_choice = _sign(trajectory[-1])
 
 		header = ["Game"]
-		data = [num_episode] # update and num_frames are +=15 ed
+		data = [i_episode] # update and num_frames are +=15 ed
 
 		header += ["Avg Returns", "Recent Correct", "decision_time"]
 		data += [avg_returns.item(), recent_correct, finalDecisionTime]
@@ -454,16 +453,16 @@ if __name__ == "__main__":
 		csv_header = ["trajectory", "choice_made", "correct_choice", "decision_time"]
 		csv_data = [trajectory, choice_made, correct_choice, finalDecisionTime]
 
-		if num_episode == 1:
+		if i_episode == 1:
 			csv_logger.writerow(csv_header)
 		csv_logger.writerow(csv_data)
 		csv_file.flush()
 
 		# Save status
-		if num_episode % 100 == 0:
+		if i_episode % 100 == 0:
 			# status = {"num_frames": num_frames, "update": update, "games": num_games, "totalReturns" : totalReturns}
 			# model.save_q_state(model_dir, num_games)
-			np.save(model_dir+'/decisionTime_'+str(num_episode)+'.npy', decisionTime)
+			np.save(model_dir+'/decisionTime_'+str(i_episode)+'.npy', decisionTime)
 			# txt_logger.info("Status saved")
 			# utils.save_status(status, model_dir)
 
