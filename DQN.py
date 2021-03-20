@@ -217,7 +217,7 @@ model_dir = utils.get_model_dir(model_name)
 model_dir = os.path.join(args.path, model_dir)
 
 txt_logger = utils.get_txt_logger(model_dir)
-csv_file, csv_logger = utils.get_csv_logger(model_dir)
+# csv_file, csv_logger = utils.get_csv_logger(model_dir)
 loss_logger = utils.get_txt_loss_logger(model_dir)
 # loss_file, loss_logger = utils.get_loss_logger(model_dir)
 
