@@ -50,16 +50,13 @@ def get_txt_logger(model_dir):
 	path = os.path.join(model_dir, "log.txt")
 	utils.create_folders_if_necessary(path)
 
-	logging.basicConfig(
-		level=logging.INFO,
-		format="%(message)s",
-		handlers=[
-			logging.FileHandler(filename=path),
-			logging.StreamHandler(sys.stdout)
-		]
-	)
+	log = logging.getLogger('log')
 
-	return logging.getLogger()
+	log.setLevel(logging.INFO)
+	log.addHandler(logging.FileHandler(filename=path))
+	log.addHandler(logging.StreamHandler(sys.stdout))
+	
+	return log
 
 
 def get_csv_logger(model_dir):
@@ -68,8 +65,19 @@ def get_csv_logger(model_dir):
 	csv_file = open(csv_path, "a")
 	return csv_file, csv.writer(csv_file)
 
-def get_loss_logger(model_dir):
+def get_csv_loss_logger(model_dir):
 	csv_path = os.path.join(model_dir, "loss.csv")
 	utils.create_folders_if_necessary(csv_path)
 	csv_file = open(csv_path, "a")
 	return csv_file, csv.writer(csv_file)
+
+def get_txt_loss_logger(model_dir):
+	path = os.path.join(model_dir, "loss.txt")
+	utils.create_folders_if_necessary(path)
+
+	loss_logger = logging.getLogger('loss')
+
+	loss_logger.setLevel(logging.INFO)
+	loss_logger.addHandler(logging.FileHandler(filename=path))
+
+	return loss_logger
