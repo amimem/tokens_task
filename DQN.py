@@ -237,6 +237,7 @@ if __name__ == "__main__":
 	finalDecisionTime = []
 	finalRewardPerGame = []
 	traj_group = []
+	total_loss = []
 	env_name = 'tokens-v0'
 	numCorrectChoice = 0
 	last_choice = 0
@@ -397,6 +398,7 @@ if __name__ == "__main__":
 
 			if loss is not None:
 				loss_logger.info("{}".format(loss.item()))
+				total_loss.append(loss.item())
 				# loss_file.flush()
 
 			if done:
@@ -473,6 +475,7 @@ if __name__ == "__main__":
 	np.save(model_dir+'/correct_'+str(args.games)+'.npy', correct_choice)
 	np.save(model_dir+'/decisionTime_'+str(args.games)+'.npy', finalDecisionTime)
 	np.save(model_dir+'/reward_'+str(args.games)+'.npy', finalRewardPerGame)
+	np.save(model_dir+'/loss_'+str(args.games)+'.npy', total_loss)
 	print('Complete')
 	env.render()
 	env.close()
