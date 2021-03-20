@@ -357,7 +357,6 @@ if __name__ == "__main__":
 		return loss
 
 	num_episodes = args.games
-	embedding_counter = 0
 	
 	sample = get_screen()
 
@@ -371,7 +370,6 @@ if __name__ == "__main__":
 		state = current_screen
 
 		for t in count():
-			embedding_counter += 1
 			# Select and perform an action
 			# time.sleep(1)
 			action = select_action(state)
