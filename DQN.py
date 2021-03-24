@@ -336,10 +336,12 @@ if __name__ == "__main__":
 		# This is merged based on the mask, such that we'll have either the expected
 		# state value or 0 in case the state was final.
 		next_state_values = torch.zeros(BATCH_SIZE, device=device)
+		txt_logger.info("try begin 339")
 		try:
 			next_state_values[non_final_mask] = target_net(non_final_next_states).max(1)[0].detach()
 		except:
 			pass
+		txt_logger.info("try done 344")
 
 		# Compute the expected Q values
 		expected_state_action_values = (next_state_values * GAMMA) + reward_batch
@@ -364,27 +366,41 @@ if __name__ == "__main__":
 
 	for i_episode in range(num_episodes):
 		# Initialize the environment and state
+		txt_logger.info("reset env call")
 		env.reset()
+		txt_logger.info("reset env return")
+
+		txt_logger.info("get screen call 371")
 		last_screen = get_screen()
 		current_screen = get_screen()
 		state = current_screen
+		txt_logger.info("get screen return 375")
 
 		for t in count():
 			# Select and perform an action
 			# time.sleep(1)
+			txt_logger.info("action select call")
 			action = select_action(state)
+			txt_logger.info("action select return")
+
+			txt_logger.info("step call")
 			nstate, reward, done, _ = env.step(_mapFromIndexToTrueActions(action.item()))
+			txt_logger.info("step return")
+
 			rewardT = torch.tensor([reward], device=device)
 
 			# Observe new state
+			txt_logger.info("get screen call 391")
 			last_screen = current_screen
 			current_screen = get_screen()
+			txt_logger.info("get screen return 394")
 			if not done:
 				next_state = current_screen
 			else:
 				next_state = None
 
 			# Store the transition in memory
+			txt_logger.info(f"{state}, {action}, {next_state}, {rewardT}")
 			memory.push(state, action, next_state, rewardT)
 
 			if not done:
@@ -392,7 +408,9 @@ if __name__ == "__main__":
 				state = next_state
 
 			# Perform one step of the optimization (on the target network)
+			txt_logger.info("optimize call")
 			loss = optimize_model()
+			txt_logger.info("optimize return")
 
 			if loss is not None:
 				loss_logger.info("{}".format(loss.item()))
@@ -400,8 +418,15 @@ if __name__ == "__main__":
 				# loss_file.flush()
 
 			if done:
+				txt_logger.info("env close call")
 				env.close()
+				txt_logger.info("env close done")
+
+				txt_logger.info("get traj call")
 				traj = env.get_trajectory()
+				txt_logger.info(f"{traj}")
+				txt_logger.info("get traj return")
+
 				totalReturns.append(reward) # reward per episode
 				traj_group.append(traj)
 
@@ -418,9 +443,12 @@ if __name__ == "__main__":
 				if abs(nstate[1]) == 0: # if we made no decision till the end
 					last_choice += 1 # last choice represents the number of episodes in which we waited until the end
 				
+				txt_logger.info("append begin")
 				choice_made.append(_sign(nstate[1])) # these arays are updated after each episode, not after each timestep
 				correct_choice.append(_sign(traj[-1]))
 				finalDecisionTime.append(abs(nstate[1])) # Why next_state? because it is the latest state that we have and we don't update state until after the if-else condition
+				txt_logger.info("append done")
+
 				if env_name == 'tokens-v3' or env_name == 'tokens-v4':
 					finalRewardPerGame.append(env.reward)
 				else:
@@ -429,27 +457,33 @@ if __name__ == "__main__":
 				break
 
 		# Update the target network, copying all weights and biases in DQN
+		txt_logger.info("update begin")
 		if i_episode % TARGET_UPDATE == 0:
 			target_net.load_state_dict(policy_net.state_dict())
+		txt_logger.info("update done")
 
 		# if num_episodes % 10 == 0: # if the game has not stpped and we moved an episode forward
 
 		# duration = int(time.time() - start_time)
 		totalReturn_val = np.sum(totalReturns) # sum of all episodic returns
-
+		txt_logger.info(f"totalReturn done {totalReturn_val}")
 
 		avg_returns = np.mean(totalReturns[-1000:])
 		recent_correct = np.mean(numRecentCorrectChoice[-1000:])
+		txt_logger.info("avg , recent done")
 
 		header = ["Game"]
 		data = [i_episode] # update and num_frames are +=15 ed
+		txt_logger.info("game header done")
 
 		header += ["Returns", "Avg Returns", "Correct Percentage", "Recent Correct", "decision_time"]
 		data += [totalReturn_val.item(), avg_returns.item(), numCorrectChoice/(i_episode+1), recent_correct, finalDecisionTime[i_episode]]
+		txt_logger.info("other headers done")
 
 		txt_logger.info(
 			"G {} | R {:.3f} | Avg R {:.3f} | Avg C {:.3f} | Rec C {:.3f} | DT {}"
 			.format(*data))
+		txt_logger.info("logging done!")
 
 		# csv_header = ["trajectory", "choice_made", "correct_choice", "decision_time", "reward_received"]
 		# csv_data = [traj_group[num_episode-1], choice_made[num_episode-1], correct_choice[num_episode-1], finalDecisionTime[num_episode-1], finalRewardPerGame[num_episode-1]]
@@ -467,12 +501,14 @@ if __name__ == "__main__":
 			# txt_logger.info("Status saved")
 			# utils.save_status(status, model_dir)
 	
+	txt_logger.info("save begin")
 	np.save(model_dir+'/trajectory_'+str(args.games)+'.npy', traj_group)
 	np.save(model_dir+'/choice_'+str(args.games)+'.npy', choice_made)
 	np.save(model_dir+'/correct_'+str(args.games)+'.npy', correct_choice)
 	np.save(model_dir+'/decisionTime_'+str(args.games)+'.npy', finalDecisionTime)
 	np.save(model_dir+'/reward_'+str(args.games)+'.npy', finalRewardPerGame)
 	np.save(model_dir+'/loss_'+str(args.games)+'.npy', total_loss)
+	txt_logger.info("save done")
 	print('Complete')
 	env.render()
 	env.close()
