@@ -23,7 +23,9 @@ import torchvision.transforms as T
 
 import argparse
 import os
+import tracemalloc
 
+tracemalloc.start()
 
 
 parser = argparse.ArgumentParser()
@@ -485,6 +487,10 @@ if __name__ == "__main__":
 			.format(*data))
 		txt_logger.info("logging done!")
 
+		current, peak = tracemalloc.get_traced_memory()
+		print(f"Current memory usage is {current / 10**6}MB; Peak was {peak / 10**6}MB")
+		
+
 		# csv_header = ["trajectory", "choice_made", "correct_choice", "decision_time", "reward_received"]
 		# csv_data = [traj_group[num_episode-1], choice_made[num_episode-1], correct_choice[num_episode-1], finalDecisionTime[num_episode-1], finalRewardPerGame[num_episode-1]]
 
@@ -510,5 +516,6 @@ if __name__ == "__main__":
 	np.save(model_dir+'/loss_'+str(args.games)+'.npy', total_loss)
 	txt_logger.info("save done")
 	print('Complete')
+	tracemalloc.stop()
 	env.render()
 	env.close()
