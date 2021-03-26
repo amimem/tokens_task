@@ -354,6 +354,8 @@ class TokensEnv(gym.Env):
 		if self.viewer:
 			self.viewer.close()
 			self.viewer = None
+		else:
+			print("Viewer is none")
 
 	def reset(self):
 		'''
