@@ -59,6 +59,8 @@ def main():
 	parser.add_argument('--eps_soft', help='use epsilon soft exploration',action='store_true')
 	parser.add_argument('--variation', default="horizon", help='which variation')
 	parser.add_argument('--reward', type=int, default="1", help='fixed reward')
+	parser.add_argument('--reward_type', default="discounted", help='reward type')
+	parser.add_argument('--avg_reward_step_size', type=float, default="0.99", help='step size')
 
 
 	args = parser.parse_args()
@@ -245,8 +247,10 @@ def main():
 		
 		if args.algo == 'sarsa':
 			next_act = monkeyAgent.get_actions(next_state, False, game_time_step)
-			loss = model.get_TDerror(state, action, next_state, next_act, reward, args.gamma, is_done, args.algo)
+			loss = model.get_TDerror(state, action, next_state, next_act, reward, args.gamma, is_done, args.algo, reward_type=args.reward_type)
 			converged = model.update_qVal(lr, state, action, loss)
+			if args.reward_type == 'average':
+				model.set_avg_reward(loss, args.avg_reward_step_size, lr)
 		elif args.algo == 'e-sarsa':
 			next_act, probs = monkeyAgent.get_actions(next_state, True, game_time_step)
 			loss = model.get_TDerror(state, action, next_state, probs, reward, args.gamma, is_done, args.algo)
@@ -261,8 +265,10 @@ def main():
 					loss2 = model2.get_TDerror(state, action, next_state, next_act, reward, args.gamma, is_done, args.algo, model)
 					converged = model2.update_qVal(lr, state, action, loss2)
 			else: # for q-learning
-				loss = model.get_TDerror(state, action, next_state, next_act, reward, args.gamma, is_done, args.algo)
+				loss = model.get_TDerror(state, action, next_state, next_act, reward, args.gamma, is_done, args.algo, reward_type=args.reward_type)
 				converged = model.update_qVal(lr, state, action, loss)
+				if args.reward_type == 'average':
+					model.set_avg_reward(loss, args.avg_reward_step_size, lr)
 
 		totalLoss.append(loss) # loss trajectory
 
