@@ -2,11 +2,12 @@ import numpy as np
 
 class Q_Table:
 
-	def __init__(self, num_states, num_actions, shape, converge_val, height): 
+	def __init__(self, num_states, num_actions, shape, converge_val, height, initial_avg_reward = 0): 
 		self.shape = shape
 		self.q_matrix = np.ones((num_states, num_actions))*0.5
 		self.converge_val = converge_val
 		self.height = height
+		self.avg_reward = initial_avg_reward
 
 	def get_qVal(self, states):
 		statesID = self.get_stateID(states)
@@ -58,7 +59,7 @@ class Q_Table:
 			
 		return temp_id_time
 
-	def get_TDerror(self, states, actions, next_states, next_actions, reward, gamma, is_done, algo, model2 = None):
+	def get_TDerror(self, states, actions, next_states, next_actions, reward, gamma, is_done, algo, model2 = None, reward_type = 'discounted'):
 		statesID = self.get_stateID(states)
 		currentActionsIndex = self._mapFromTrueActionsToIndex(actions)
 		current_qVal = self.q_matrix[statesID, currentActionsIndex]
@@ -83,7 +84,15 @@ class Q_Table:
 				next_statesID = self.get_stateID(next_states)
 				next_qVal = model2.q_matrix[next_statesID, np.argmax(self.q_matrix[next_statesID, :])]
 
-		return reward + (gamma*next_qVal) - current_qVal
+		if reward_type == 'discounted':
+			return reward + (gamma*next_qVal) - current_qVal
+		elif reward_type == 'average':
+			return reward - self.avg_reward + next_qVal - current_qVal
+		else:
+			return None
+
+	def set_avg_reward(self, new_error, step_size, learning_rate):
+		self.avg_reward += new_error*step_size*learning_rate
 
 	def save_q_state(self, file, timestep):
 		np.save(file+'/q_mat_'+str(timestep), self.q_matrix)
