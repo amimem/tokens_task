@@ -60,6 +60,7 @@ def main():
 	parser.add_argument('--variation', default="horizon", help='which variation')
 	parser.add_argument('--reward', type=int, default="1", help='fixed reward')
 	parser.add_argument('--reward_type', default="discounted", help='reward type')
+	parser.add_argument('--wait', default="unbiased", help='biased or unbiased wait action')
 	parser.add_argument('--avg_reward_step_size', type=float, default="0.99", help='step size')
 
 
@@ -107,7 +108,7 @@ def main():
 
 	num_states = env.get_num_states()
 	num_actions = env.get_num_actions()
-	total_run_time_steps = args.height * args.games # Total time-steps
+	total_run_time_steps = args.games # Total time-steps
 
 	numNT = (args.height * 2) + 1  # -15 to 15
 	numHT = (args.height * 2) + 1 # -15 to 15
@@ -148,8 +149,16 @@ def main():
 		policy = lib.EpsilonGreedyGamePolicy()
 		eps_track = lib.EpsilonTracker(args.eps_start,args.eps_final, args.eps_games, policy)
 
+	elif args.wait == 'unbiased':
+		policy = lib.EpsilonGreedyPolicy()
+		eps_track = lib.EpsilonTracker(args.eps_start,args.eps_final, args.eps_games, policy)
+
+	elif args.wait == 'baised':
+		policy = lib.EpsilonGreedyBiasedPolicy()
+		eps_track = lib.EpsilonTracker(args.eps_start,args.eps_final, args.eps_games, policy)
+
 	else:
-		policy = lib.EpsilonGreedyPolicy(epsilon=args.eps_start)
+		policy = lib.EpsilonGreedyGamePolicy(epsilon=args.eps_start)
 		eps_track = lib.EpsilonTracker(args.eps_start,args.eps_final, args.eps_games*args.height, policy) # args.eps_games*args.height is the number of total time_step for decreasing epsilon
 
 	if args.algo == 'sarsa': 
@@ -198,6 +207,7 @@ def main():
 	finalRewardPerGame = []
 	numCorrectChoice = 0
 	numRecentCorrectChoice = []
+	avg_reward = []
 
 	took_action = False
 
@@ -243,7 +253,7 @@ def main():
 
 
 
-		lr = lr_sched.get_lr(num_frames) # learning rate is changed from timestep to timestep
+		lr = lr_sched.get_lr(num_games) # learning rate is changed from timestep to timestep
 		
 		if args.algo == 'sarsa':
 			next_act = monkeyAgent.get_actions(next_state, False, game_time_step)
@@ -251,6 +261,7 @@ def main():
 			converged = model.update_qVal(lr, state, action, loss)
 			if args.reward_type == 'average':
 				model.set_avg_reward(loss, args.avg_reward_step_size, lr)
+				avg_reward.append(model.avg_reward)
 		elif args.algo == 'e-sarsa':
 			next_act, probs = monkeyAgent.get_actions(next_state, True, game_time_step)
 			loss = model.get_TDerror(state, action, next_state, probs, reward, args.gamma, is_done, args.algo)
@@ -269,6 +280,7 @@ def main():
 				converged = model.update_qVal(lr, state, action, loss)
 				if args.reward_type == 'average':
 					model.set_avg_reward(loss, args.avg_reward_step_size, lr)
+					avg_reward.append(model.avg_reward)
 
 		totalLoss.append(loss) # loss trajectory
 
@@ -314,10 +326,9 @@ def main():
 			traj_group.append(traj) # the list of all trajectories over all episodes
 			next_state, game_time_step = env.reset()
 			took_action = False
-		else:
-			num_frames+=1 
-			update+= 1
-
+		
+		num_frames+=1 
+		update+= 1
 		state = next_state
 
 
@@ -370,6 +381,7 @@ def main():
 			# status = {"num_frames": num_frames, "update": update, "games": num_games, "totalReturns" : totalReturns}
 			model.save_q_state(model_dir, num_games)
 			np.save(model_dir+'/decisionTime_'+str(num_games)+'.npy', decisionTime)
+			np.save(model_dir+'/avg_reward_'+str(num_games)+'.npy', avg_reward)
 			# txt_logger.info("Status saved")
 			# utils.save_status(status, model_dir)
 
