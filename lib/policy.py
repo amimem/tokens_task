@@ -18,7 +18,10 @@ class GreedyPolicy(Policy):
 
 	def __call__(self, scores):
 		assert isinstance(scores, np.ndarray)
-		return np.argmax(scores, axis=0)
+		if np.all(scores == scores[0]):
+			return np.random.choice(len(scores))
+		else:
+			return np.argmax(scores, axis=0)
 
 class EpsilonGreedyPolicy(Policy):
 	"""
@@ -39,6 +42,32 @@ class EpsilonGreedyPolicy(Policy):
 		
 		if eps_mask:
 
+			return rand_actions, None
+
+		else:
+			return actions, None
+
+
+class EpsilonGreedyBiasedPolicy(Policy):
+	"""
+	Select random actions with prob <= epsilon, else select greedy actions
+	"""
+
+	def __init__(self, epsilon=0.01, default_policy=GreedyPolicy()):
+		self.epsilon = epsilon
+		self.default_policy = default_policy
+
+	def __call__(self, scores):
+		assert isinstance(scores, np.ndarray)
+		num_actions = len(scores)
+		eps_mask = np.random.random(size=1) < self.epsilon
+		actions = self.default_policy(scores)
+
+		prob_wait_action = 1/3 + self.epsilon
+		prob_left_right_action = 1/3-(self.epsilon/2)
+		rand_actions = np.random.choice(num_actions, size=sum(eps_mask), p=[prob_wait_action, prob_left_right_action, prob_left_right_action])
+
+		if eps_mask:
 			return rand_actions, None
 
 		else:
