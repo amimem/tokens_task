@@ -208,6 +208,7 @@ def main():
 	numCorrectChoice = 0
 	numRecentCorrectChoice = []
 	avg_reward = []
+	avg_reward_episode = []
 
 	took_action = False
 
@@ -285,6 +286,7 @@ def main():
 		totalLoss.append(loss) # loss trajectory
 
 		if is_done:
+			avg_reward_episode.append(model.avg_reward)
 			env.close()
 			num_games+=1
 
@@ -382,6 +384,7 @@ def main():
 			model.save_q_state(model_dir, num_games)
 			np.save(model_dir+'/decisionTime_'+str(num_games)+'.npy', decisionTime)
 			np.save(model_dir+'/avg_reward_'+str(num_games)+'.npy', avg_reward)
+			np.save(model_dir+'/avg_reward_episode_'+str(num_games)+'.npy', avg_reward_episode)
 			# txt_logger.info("Status saved")
 			# utils.save_status(status, model_dir)
 
