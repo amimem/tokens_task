@@ -62,6 +62,7 @@ def main():
 	parser.add_argument('--reward_type', default="discounted", help='reward type')
 	parser.add_argument('--wait', default="unbiased", help='biased or unbiased wait action')
 	parser.add_argument('--avg_reward_step_size', type=float, default="0.99", help='step size')
+	parser.add_argument('--negative_reward', type=bool, default=False, help='use negative reward')
 
 
 	args = parser.parse_args()
