@@ -13,7 +13,7 @@ class TokensEnv(gym.Env):
 		'video.frames_per_second': 50
 		}
 
-	def __init__(self, alpha, seed=7, terminal=3, fancy_discount=False, v='terminate'):
+	def __init__(self, alpha, seed=7, terminal=3, fancy_discount=False, negative_reward=False, v='terminate'):
 		'''
 		This is the constructor for the tokens env.
 		: param alpha (float): discount factor
@@ -41,6 +41,7 @@ class TokensEnv(gym.Env):
 		self.trajectory = [0]
 		self.v = v
 		self.viewer = None
+		self.negative_reward = negative_reward
 
 	def step(self, action):
 		if self.v == 'terminate':
@@ -250,7 +251,10 @@ class TokensEnv(gym.Env):
 		if num1 == num2:
 			return self.reward
 		else:
-			return 0
+			if self.negative_reward:
+				return -(self.reward)
+			else:
+				return 0
 
 	def get_num_states(self):
 		'''
