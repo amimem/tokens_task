@@ -4,7 +4,6 @@ from gym.utils import seeding
 import numpy as np
 import unittest
 import time
-from gym.envs.classic_control import rendering
 
 class TokensEnv(gym.Env):
 
@@ -295,6 +294,8 @@ class TokensEnv(gym.Env):
 
 		if self.viewer is None:
 
+			from gym.envs.classic_control import rendering
+			
 			self.num_range = np.arange(start = -radius + 2*token_radius, stop = radius - token_radius , step = token_radius*tokens_distance_scale)
 			self.coords_list = []
 
