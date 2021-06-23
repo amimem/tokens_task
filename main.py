@@ -89,7 +89,7 @@ def main():
 	else:
 		block_discount = 0.75
 
-	env = gym.make(args.env, alpha=block_discount, seed=args.seed, terminal=args.height, fancy_discount=args.fancy_discount, v=args.variation)
+	env = gym.make(args.env, alpha=block_discount, seed=args.seed, terminal=args.height, fancy_discount=args.fancy_discount, v=args.variation, negative_reward=args.negative_reward)
 	txt_logger.info("Environments loaded\n")
 
 	return_zero = False
