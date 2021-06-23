@@ -1,6 +1,9 @@
 import csv
 import os
-import torch
+try:
+	import torch
+except ImportError:
+	print("no torch")
 import logging
 import sys
 
