@@ -13,6 +13,7 @@ import datetime
 import sys
 import utils
 import lib
+import pandas as pd
 
 import numpy as np
 
@@ -213,6 +214,8 @@ def main():
 
 	took_action = False
 
+	# df = pd.DataFrame([], columns = ["trajectory", "choice_made", "correct_choice", "decision_time", "reward_received"])
+
 	while num_games < args.games: 
 
 		if args.softmax:
@@ -377,6 +380,14 @@ def main():
 			csv_logger.writerow(csv_data)
 			csv_file.flush()
 
+			# df = pd.DataFrame({"trajectory": traj_group, 
+			# 						"choice_made": choice_made,
+			# 						"correct_choice": correct_choice,
+			# 						"decision_time": finalDecisionTime,
+			# 						"reward_received": finalRewardPerGame})
+
+			# df.append(tmp_df, ignore_index=True)
+
 			num_games_prevs = num_games
 
 		# Save status
@@ -386,6 +397,11 @@ def main():
 			np.save(model_dir+'/decisionTime_'+str(num_games)+'.npy', decisionTime)
 			np.save(model_dir+'/avg_reward_'+str(num_games)+'.npy', avg_reward)
 			np.save(model_dir+'/avg_reward_episode_'+str(num_games)+'.npy', avg_reward_episode)
+			pd.DataFrame({"trajectory": traj_group, 
+									"choice_made": choice_made,
+									"correct_choice": correct_choice,
+									"decision_time": finalDecisionTime,
+									"reward_received": finalRewardPerGame}).to_pickle(model_dir+'/df_'+str(num_games)+'.pkl')
 			# txt_logger.info("Status saved")
 			# utils.save_status(status, model_dir)
 
