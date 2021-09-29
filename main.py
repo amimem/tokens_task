@@ -58,7 +58,7 @@ def main():
 	parser.add_argument('--reward_type', default="discounted", help='reward type')
 	parser.add_argument('--wait', default="unbiased", help='biased or unbiased wait action')
 	parser.add_argument('--avg_reward_step_size', type=float, default="0.99", help='step size')
-	parser.add_argument('--negative_reward', type=bool, default=False, help='use negative reward')
+	parser.add_argument('--negative_reward', type=float, default=0.0, help='use negative reward')
 
 
 	args = parser.parse_args()
@@ -276,7 +276,11 @@ def main():
 					loss2 = model2.get_TDerror(state, action, next_state, next_act, reward, args.gamma, is_done, args.algo, model)
 					converged = model2.update_qVal(lr, state, action, loss2)
 			else: # for q-learning
-				loss = model.get_TDerror(state, action, next_state, next_act, reward, args.gamma, is_done, args.algo, reward_type=args.reward_type)
+				if args.reward_type == 'rvi':
+					ref_state = np.array([0,0,0])
+					loss = model.get_TDerror(state, action, next_state, next_act, reward, args.gamma, is_done, args.algo, reward_type=args.reward_type, ref_state=ref_state, ref_action = 0)
+				else:
+					loss = model.get_TDerror(state, action, next_state, next_act, reward, args.gamma, is_done, args.algo, reward_type=args.reward_type)
 				converged = model.update_qVal(lr, state, action, loss)
 				if args.reward_type == 'average':
 					model.set_avg_reward(loss, args.avg_reward_step_size, lr)
