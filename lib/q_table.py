@@ -13,6 +13,10 @@ class Q_Table:
 		statesID = self.get_stateID(states)
 		return self.q_matrix[statesID, :]
 
+	def get_ref_qVal(self, state, action_index):
+		stateID = self.get_stateID(states=state)
+		return self.q_matrix[stateID,action_index]
+
 	def update_qVal(self, learning_rate, states, actions, td_error):
 
 		temp = self.q_matrix.copy()
@@ -59,7 +63,7 @@ class Q_Table:
 			
 		return temp_id_time
 
-	def get_TDerror(self, states, actions, next_states, next_actions, reward, gamma, is_done, algo, model2 = None, reward_type = 'discounted'):
+	def get_TDerror(self, states, actions, next_states, next_actions, reward, gamma, is_done, algo, model2 = None, ref_state = None, ref_action = None, reward_type = 'discounted'):
 		statesID = self.get_stateID(states)
 		currentActionsIndex = self._mapFromTrueActionsToIndex(actions)
 		current_qVal = self.q_matrix[statesID, currentActionsIndex]
@@ -88,6 +92,10 @@ class Q_Table:
 			return reward + (gamma*next_qVal) - current_qVal
 		elif reward_type == 'average':
 			return reward - self.avg_reward + next_qVal - current_qVal
+		elif reward_type == "rvi":
+			q_array = self.get_qVal(states=ref_state)
+			q_ref = q_array[ref_action]
+			return reward - q_ref + next_qVal - current_qVal
 		else:
 			return None
 
