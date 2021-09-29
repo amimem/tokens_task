@@ -12,7 +12,7 @@ class TokensEnv(gym.Env):
 		'video.frames_per_second': 50
 		}
 
-	def __init__(self, alpha, seed=7, terminal=3, fancy_discount=False, negative_reward=False, v='terminate'):
+	def __init__(self, alpha, seed=7, terminal=3, fancy_discount=False, negative_reward=0.0, v='terminate'):
 		'''
 		This is the constructor for the tokens env.
 		: param alpha (float): discount factor
@@ -250,10 +250,7 @@ class TokensEnv(gym.Env):
 		if num1 == num2:
 			return self.reward
 		else:
-			if self.negative_reward:
-				return -(self.reward)
-			else:
-				return 0
+			return self.negative_reward
 
 	def get_num_states(self):
 		'''
@@ -359,8 +356,8 @@ class TokensEnv(gym.Env):
 		if self.viewer:
 			self.viewer.close()
 			self.viewer = None
-		else:
-			print("Viewer is none")
+		# else:
+			# print("Viewer is none")
 
 	def reset(self):
 		'''
