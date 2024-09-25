@@ -24,8 +24,7 @@ After installing the requirements run the following commands:
 ```bash
 python main.py --games 10000 --env tokens-v0 --variation horizon --algo q-learning --lr 1.0 --lr_final 0.001 --seed 0 --height 11 --gamma 0.8 --fancy_discount --eps_start 0.01 --eps_final 0.0001 --eps_games 10000
 
-python main.py --games 10000 --env tokens-v0 --variation horizon --algo q-learning --lr 1.0 --lr_final 0.001 --seed 0 --height 11 --gamma 0.8 --fancy_discount --eps_soft --eps_start 0.01 --eps_final 0.0001 --eps_games 100[TokensProject_AminM.pdf](https://github.com/user-attachments/files/16913931/TokensProject_AminM.pdf)
-00[TokensProject_AminM.pdf](https://github.com/user-attachments/files/16913930/TokensProject_AminM.pdf)
+python main.py --games 10000 --env tokens-v0 --variation horizon --algo q-learning --lr 1.0 --lr_final 0.001 --seed 0 --height 11 --gamma 0.8 --fancy_discount --eps_soft --eps_start 0.01 --eps_final 0.0001 --eps_games 100
 
 
 python main.py --games 10000 --env tokens-v0 --variation horizon --algo q-learning --lr 1.0 --lr_final 0.001 --seed 0 --height 11 --gamma 0.8 --fancy_discount --tmp_start 0.01 --tmp_final 0.0001 --tmp_games 10000 --softmax
